@@ -50,7 +50,6 @@ function getUser(req, res) {
         Array.from(Userlist.values()).forEach(function (user) {
             if (user.id === id) {
                 userFound = true;
-                console.log(userFound);
                 output.push({
                     id: user.id,
                     email: user.email,
@@ -101,7 +100,7 @@ function deleteUser(req, res) {
         if (user.id === user_id) {
             userFound = true;
             // Kullanıcıyı Userlist'ten siliyoruz
-            Userlist.delete(user.id);
+            Userlist.delete(user.email);
             res.sendStatus(204);
         }
     });
@@ -132,8 +131,6 @@ function postUser(req, res) {
         }
         var err = { errors: errors }; // `errors`'ı bir nesne içinde tut
         output.push(err);
-        res.contentType("application/json");
-        res.json(output);
     }
     else if (!Userlist.has(email.toString())) {
         var user = new User(id_counter.toString(), fName, lName, email, password);
@@ -146,8 +143,6 @@ function postUser(req, res) {
             firstName: user.firstName,
             lastName: user.lastName,
         });
-        res.contentType("application/json");
-        res.json(output);
         id_counter++;
     }
     else {
@@ -155,8 +150,9 @@ function postUser(req, res) {
         var err = { errors: errors }; // `errors`'ı bir nesne içinde tut
         res.status(409);
         output.push(err);
-        res.json(output);
     }
+    res.contentType("application/json");
+    res.json(output);
 }
 /*function patchSong(req: express.Request, res: express.Response): void {
     const oldTitle: string = req.params.title;

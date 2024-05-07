@@ -117,7 +117,7 @@ function deleteUser(req: express.Request, res: express.Response): void {
         if (user.id === user_id) {
             userFound = true;
             // Kullanıcıyı Userlist'ten siliyoruz
-            Userlist.delete(user.id);
+            Userlist.delete(user.email);
             res.sendStatus(204);
         }
     });
