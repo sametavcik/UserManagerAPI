@@ -1,0 +1,25 @@
+// Versucht den Song "Despacito" abzufragen, den es aber (noch) nicht gibt
+GET /user/2 HTTP/2
+Host: localhost:8080
+
+
+// Legt den Song "Despacito" an
+
+
+
+POST /user HTTP/2
+Host: localhost:8080
+Content-Type: application/json
+
+{
+     "firstName":"asda",
+
+    "lastName": 
+      "must be provided"
+    ,
+    "email": 
+      "must be provided",
+  "password": "asdasd"
+}
+
+
