@@ -20,6 +20,7 @@ class User {   // User Class
 }
 
 class Animal { // Animal Class
+    id: string;
     name: string;
     kind: string;
 
@@ -49,9 +50,13 @@ app.use("/ressources/bootstrap", express.static("public/node_modules/bootstrap/d
 app.get("/user/:id", getUser);
 app.get("/user", getUser);
 app.post("/user", postUser);
-//app.put("/song/:title", putUser);
-//app.patch("/song/:title", patchSong);
+app.patch("/user/:id", patchUser);
 app.delete("/user/:id", deleteUser);
+
+app.get("/user/:id/pets", getAnimals);
+app.get("/user/:id/pets/:animalid", getAnimals);
+app.post("/user/:id/pets", postAnimal);
+app.delete("/user/:id/pets/:animalid", deleteAnimal);
 
 app.use(notFound);
 
@@ -59,7 +64,6 @@ function getUser(req: express.Request, res: express.Response): void {
     const id: string = req.params.id;
     const search: string = req.query.q?.toString();
     const output = [];
-    let errors: { [key: string]: string[] } = {};
 
     let userFound = false;
     if (id !== undefined) {
@@ -127,11 +131,7 @@ function deleteUser(req: express.Request, res: express.Response): void {
     }
 }
 
-function postUser(req: express.Request, res: express.Response): void {
-    const email: string = req.body.email;
-    const fName: string = req.body.firstName;
-    const lName: string = req.body.lastName;
-    const password: string = req.body.password;    
+function checkFields(email:string,fName:string,lName:string,password:string,res: express.Response):any{
     const output = [];
     let errors: { [key: string]: string[] } = {};
 
@@ -150,11 +150,62 @@ function postUser(req: express.Request, res: express.Response): void {
         if (password === undefined) {
             errors['password'] = ['must be provided'];
         }
+    } else{
+        if(email !== undefined && email != ""){
+            Array.from(Userlist.values()).forEach(user => {
+                if(user.email === email){
+                    errors['email'] = ['given value is already used by another user'];
+                    res.status(409);
+                }
+            });        
+        }else{
+            res.status(422);
+            if(email == ""){
+                errors['email'] = ['must not be blank'];
+            }
+            if(fName == ""){
+                errors['firstName'] = ['must not be blank']; 
+            }  
+            if(lName == ""){
+                errors['lastName'] = ['must not be blank']; 
+            }  
+            if(password == ""){
+                errors['password'] = ['must not be blank']; 
+            }  
+        }
+        if(!errors.hasOwnProperty("firstName")){
+            if(fName == ""){
+                errors['firstName'] = ['must not be blank']; 
+            }  
+        }
+        if(!errors.hasOwnProperty("lastName")){
+            if(lName == ""){
+                errors['lastname'] = ['must not be blank']; 
+            }  
+        }
+        if(!errors.hasOwnProperty("password")){
+            if(password == ""){
+                errors['password'] = ['must not be blank']; 
+            }  
+        }
 
-        const err = { errors }; // `errors`'ı bir nesne içinde tut
-        output.push(err);
-        
-    } else if (!Userlist.has(email.toString())) {
+    
+    } 
+    const err = { errors };
+    if(Object.keys(errors).length > 0){
+        output.push(err)
+    }
+    return output;
+}
+
+function postUser(req: express.Request, res: express.Response): void {
+    const email: string = req.body.email;
+    const fName: string = req.body.firstName;
+    const lName: string = req.body.lastName;
+    const password: string = req.body.password;    
+    const output = checkFields(email,fName,lName,password,res);
+    
+    if (output.length == 0) {
         let user =  new User(id_counter.toString() ,fName, lName, email, password)
         Userlist.set(email, user);
         res.status(201);
@@ -166,120 +217,273 @@ function postUser(req: express.Request, res: express.Response): void {
             lastName: user.lastName,
         });
         id_counter++;
-    } else {
-        errors['email'] = ['given value is already used by another user'];
-        const err = { errors }; // `errors`'ı bir nesne içinde tut
-        res.status(409);
-        output.push(err)
-    }
+    } 
 
     res.contentType("application/json");
     res.json(output);
+
+}
+
+function checkValues(email:string,fName:string,lName:string,password:string,user:User,errors:any,res: express.Response,output:any):any{
     
-}
-
-
-
-/*function patchSong(req: express.Request, res: express.Response): void {
-    const oldTitle: string = req.params.title;
-    const newTitle: string = req.body.title;
-    const interpret: string = req.body.interpret;
-
-    if (jukebox.has(oldTitle)) {
-        const song: Song = jukebox.get(oldTitle);
-        if (interpret !== undefined) {
-            song.interpret = interpret;
-        }
-        if (newTitle !== undefined) {
-            if (!jukebox.has(newTitle)) {
-                jukebox.delete(oldTitle);
-                song.title = newTitle;
-                jukebox.set(newTitle, song);
-            } else {
+    if(email !== undefined && email != ""){
+        Array.from(Userlist.values()).forEach(user => {
+            if(user.email === email){
+                errors['email'] = ['given value is already used by another user'];
                 res.status(409);
-                res.send("Song already exists");
             }
+        });        
+    }else{
+        if(email == ""){
+            errors['email'] = ['must not be blank'];
+            res.status(422);
+            }
+        if(fName == ""){
+            errors['firstName'] = ['must not be blank'];
+            res.status(422);
         }
-
-        res.status(200);
-        res.location("/song/" + encodeURI(newTitle))
-        res.contentType("application/json");
-        res.json(song);
-    } else {
-        res.status(404);
-        res.send("Song not found");
+        
+        if(lName == ""){
+            errors['lastName'] = ['must not be blank']; // mail normal baska bi field "" gelirse patlar
+            res.status(422);
+        }
+        
+        if(password == ""){
+            errors['password'] = ['must not be blank'];
+            res.status(422);
+        }
     }
+    
+    const err = { errors };
+    if(Object.keys(errors).length > 0){
+        output.push(err)
+    }
+   
+    return output
 }
-*/
-/*
-function putUser(req: express.Request, res: express.Response): void {
+
+function patchUser(req: express.Request, res: express.Response): void {
     const id: string = req.params.id;
     const email: string = req.body.email;
-    const fName: string = req.body.fName;
-    const lName: string = req.body.lName;
+    const fName: string = req.body.firstName;
+    const lName: string = req.body.lastName;
     const password: string = req.body.password;  
+
+    let output = [];
+    let errors: { [key: string]: string[] } = {};
 
     if(id !== undefined){
 
-        if(!Userlist.has(email)){
-            const user: User = Userlist.get(email);
-            if(ema)
+        let userFound = false;
+        Array.from(Userlist.values()).forEach(user => {
+            if (user.id === id.toString()) {
+                userFound = true;
+                output = checkValues(email,fName,lName,password,user,errors,res,output)
+        
+                if(output.length == 0){
+                    if(email !== undefined){
+                        user.email = email;
+                    }
+                    if(fName !== undefined){
+                        user.firstName = fName
+                    }
+                    if(lName !== undefined){
+                        user.lastName = lName
+                    }
+                    if(password !== undefined){
+                        user.password = password
+                    }
+                    
+                    output.push({
+                        id: user.id,
+                        email: user.email,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                    });
+                    res.status(200);
+                }
+            }
+        });
+    
+        if (!userFound) {
+            notFound(req,res);
         }else{
-            res.status(409);
-            res.send("User already exists");
+            res.contentType("application/json");
+            res.json(output);  
         }
-
-
+        
+    }else{
+        notFound(req,res)
     }
-    if (newTitle === undefined || interpret === undefined) {
-        res.status(422);
-        res.send("Values are not defined");
-    } else if (jukebox.has(oldTitle) && !jukebox.has(newTitle)) {
-        const song: Song = jukebox.get(oldTitle);
-        jukebox.delete(oldTitle);
-        song.title = newTitle;
-        song.interpret = interpret;
-        jukebox.set(newTitle, song);
-        res.status(200);
-        res.location("/song/" + encodeURI(newTitle))
-        res.contentType("application/json");
-        res.json(song);
-    } else {
-        res.status(409);
-        res.send("Song already exists");
+    
+}
+
+function getAnimals(req: express.Request, res: express.Response): void {
+    const id: string = req.params.id;
+    const animal_id: string = req.params.animalid;
+    const output = [];
+    let userFound = false;
+    if (id !== undefined) {
+        Array.from(Userlist.values()).forEach(user => {
+            if (user.id === id) {
+                userFound = true;
+                if(animal_id === undefined){
+                    Array.from(user.animalList.values()).forEach(animal => {
+                        output.push({
+                            id: animal.id,
+                            name: animal.name,
+                            kind: animal.kind
+                        });
+                    });
+                }else{
+                    console
+                    Array.from(user.animalList.values()).forEach(animal => {
+                        if(animal_id === animal.id){
+                            output.push({
+                                id: animal.id,
+                                name: animal.name,
+                                kind: animal.kind
+                            });
+                        }
+                    });
+                }
+                
+            }
+        });
+        if(!userFound){
+            notFound(req,res)
+        }else{
+            if(output.length != 0){
+                res.status(200);
+                res.contentType("application/json");
+                res.json(output);
+            }else{
+                animalNotFound(req,res)
+            }
+           
+        }   
+    }else{
+        notFound(req,res)
     }
 }
-/*
-function patchSong(req: express.Request, res: express.Response): void {
-    const oldTitle: string = req.params.title;
-    const newTitle: string = req.body.title;
-    const interpret: string = req.body.interpret;
 
-    if (jukebox.has(oldTitle)) {
-        const song: Song = jukebox.get(oldTitle);
-        if (interpret !== undefined) {
-            song.interpret = interpret;
+function checkAnimalFields(animalList:Map<string, Animal>,errors:any,name:string,output:any,kind:string,res: express.Response):any{
+    if (name === undefined || kind === undefined) {
+        res.status(422);
+        if (name === undefined) {
+            errors['name'] = ['must be provided'];
         }
-        if (newTitle !== undefined) {
-            if (!jukebox.has(newTitle)) {
-                jukebox.delete(oldTitle);
-                song.title = newTitle;
-                jukebox.set(newTitle, song);
-            } else {
-                res.status(409);
-                res.send("Song already exists");
-            }
+        if (kind === undefined) {
+            errors['kind'] = ['must be provided'];
+        }
+        
+    }else{
+        if(name !== undefined && name != ""){
+            Array.from(animalList.values()).forEach(animal => {
+                if(animal.name === name){
+                    errors['name'] = ['given value is already used by another user'];
+                    res.status(409);
+                }
+            });        
+        }else{
+            res.status(422);
+            if(name == ""){
+                errors['name'] = ['must not be blank'];
+                }
+            
+            if(kind == ""){
+                errors['kind'] = ['must not be blank']; 
+            }  
+        }
+        if(!errors.hasOwnProperty("kind")){
+            if(kind == ""){
+                errors['kind'] = ['must not be blank']; 
+            }  
         }
 
-        res.status(200);
-        res.location("/song/" + encodeURI(newTitle))
-        res.contentType("application/json");
-        res.json(song);
-    } else {
-        res.status(404);
-        res.send("Song not found");
     }
-}*/
+    
+    const err = { errors };
+    if(Object.keys(errors).length > 0){
+        output.push(err)
+    }
+   
+    return output
+
+}
+
+function postAnimal(req: express.Request, res: express.Response): void {
+    const id: string = req.params.id;
+    const name: string = req.body.name;
+    const kind: string = req.body.kind;
+    let output = [];
+    let errors: { [key: string]: string[] } = {};
+    let userFound = false;
+    if (id !== undefined) {
+        Array.from(Userlist.values()).forEach(user => {
+            if (user.id === id) {
+                userFound = true;
+                output = checkAnimalFields(user.animalList,errors,name,output,kind,res);
+                if(output.length == 0){
+                    let animal: Animal = new Animal(name, kind);
+                    animal.id = (user.animalList.size).toString()
+                    user.animalList.set(name,animal)
+                    output.push({
+                        id: animal.id,
+                        name: name,
+                        kind: kind
+                    });
+                    res.status(200);
+                }
+            }
+        });
+        if(!userFound){
+            notFound(req,res)
+        }else{
+            res.contentType("application/json");
+            res.json(output);
+        }
+
+    }else{
+        notFound(req,res)
+    }
+
+  
+}
+
+function deleteAnimal(req: express.Request, res: express.Response): void {
+    const id: string = req.params.id;
+    const animal_id: string = req.params.animalid;
+
+    let userFound = false;
+    let animalFound = false;
+    if (id !== undefined) {
+        Array.from(Userlist.values()).forEach(user => {
+            if (user.id === id) {
+                userFound = true;
+                
+                Array.from(user.animalList.values()).forEach(animal => {
+                    if(animal_id === animal.id){
+                        animalFound = true
+                        user.animalList.delete(animal.name)
+                        res.sendStatus(204);
+                    }
+                });
+               
+            }
+        });
+        if(!userFound){
+            notFound(req,res)
+        }else if(!animalFound){
+            animalNotFound(req,res)
+        }
+
+    }else{
+        notFound(req,res)
+    }
+
+  
+}
 
 function notFound(req: express.Request, res: express.Response): void {
     const output = [];
@@ -290,3 +494,14 @@ function notFound(req: express.Request, res: express.Response): void {
     output.push(err)
     res.json(output);
 }
+
+function animalNotFound(req: express.Request, res: express.Response): void {
+    const output = [];
+    let errors: { [key: string]: string[] } = {};
+    const err = { errors };
+    errors['detail'] = ['pet not found'];
+    res.status(404);
+    output.push(err)
+    res.json(output);
+}
+

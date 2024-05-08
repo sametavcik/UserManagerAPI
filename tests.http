@@ -1,25 +1,50 @@
-// Versucht den Song "Despacito" abzufragen, den es aber (noch) nicht gibt
-GET /user/2 HTTP/2
-Host: localhost:8080
+# # # # # # // Versucht den Song "Despacito" abzufragen, den es aber (noch) nicht gibt
+# GET /user HTTP/2
+# Host: localhost:8080
+
+# GET /user/0/pets/0 HTTP/2
+# Host: localhost:8080
 
 
 // Legt den Song "Despacito" an
 
 
+# PATCH /user/0 HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
 
-POST /user HTTP/2
-Host: localhost:8080
-Content-Type: application/json
-
-{
-     "firstName":"asda",
-
-    "lastName": 
-      "must be provided"
-    ,
-    "email": 
-      "must be provided",
-  "password": "asdasd"
-}
+# {
+#      "email":"asasf",
+#      "firstName":""
+# }
 
 
+# POST /user HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "firstName":"dasdsa",
+#      "lastName":"asfasda",
+#       "email":"asdasd",
+#        "password":"asfasdas"
+
+# }
+
+# POST /user/0/pets HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "name":"kaakasdadasasdadasdas",
+#      "kind":"sann"
+# }
+
+# DELETE /user/0/pets/0 HTTP/2
+# Host: localhost:8080
+
+
+# "firstName":"knknk",
+#      "lastName":"asdasd",
+#       "email":"asdasd",
+#        "password":"asdasd"
