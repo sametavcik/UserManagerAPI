@@ -176,16 +176,19 @@ function checkFields(email:string,fName:string,lName:string,password:string,res:
         if(!errors.hasOwnProperty("firstName")){
             if(fName == ""){
                 errors['firstName'] = ['must not be blank']; 
+                res.status(422);
             }  
         }
         if(!errors.hasOwnProperty("lastName")){
             if(lName == ""){
                 errors['lastname'] = ['must not be blank']; 
+                res.status(422);
             }  
         }
         if(!errors.hasOwnProperty("password")){
             if(password == ""){
                 errors['password'] = ['must not be blank']; 
+                res.status(422);
             }  
         }
 
@@ -381,7 +384,7 @@ function checkAnimalFields(animalList:Map<string, Animal>,errors:any,name:string
         if(name !== undefined && name != ""){
             Array.from(animalList.values()).forEach(animal => {
                 if(animal.name === name){
-                    errors['name'] = ['given value is already used by another user'];
+                    errors['name'] = ['given value is already used by another pet from this user'];
                     res.status(409);
                 }
             });        

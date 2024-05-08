@@ -1,50 +1,202 @@
-# # # # # # // Versucht den Song "Despacito" abzufragen, den es aber (noch) nicht gibt
+
+// User's Situations
+
+/////////////////////READ///////////////////
+
+// Succesful scenario =>200 OK
 # GET /user HTTP/2
 # Host: localhost:8080
 
-# GET /user/0/pets/0 HTTP/2
+// Succesful scenario =>200 OK
+# GET /user/0 HTTP/2
 # Host: localhost:8080
 
-
-// Legt den Song "Despacito" an
-
-
-# PATCH /user/0 HTTP/2
+// Error => "User not found"  ( if user is not exist)
+# GET /user/2 HTTP/2
 # Host: localhost:8080
-# Content-Type: application/json
 
-# {
-#      "email":"asasf",
-#      "firstName":""
-# }
+//////////////// CREATE ////////////////////////
 
-
+# //Succesful scenario => 201 Created
 # POST /user HTTP/2
 # Host: localhost:8080
 # Content-Type: application/json
 
 # {
-#      "firstName":"dasdsa",
-#      "lastName":"asfasda",
-#       "email":"asdasd",
-#        "password":"asfasdas"
-
+#     "firstName": "Samet",
+#     "lastName": "Avcik",
+#     "email": "new@gmail.com",
+#     "password": "asdasd"
 # }
 
-# POST /user/0/pets HTTP/2
+// Error => 422 Unprocessable Entity => "must be provided" (we have to enter all inputs)
+# POST /user HTTP/2
 # Host: localhost:8080
 # Content-Type: application/json
 
 # {
-#      "name":"kaakasdadasasdadasdas",
-#      "kind":"sann"
+#     "firstName": "Samet"
 # }
 
-# DELETE /user/0/pets/0 HTTP/2
+// Error => 409 Conflict => "given value is already used by another user" (email conflict)
+# POST /user HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#   "firstName": "xxx",
+#   "lastName": "New",
+#   "email": "new@gmail.com",
+#   "password": "asdasd"
+# }
+
+// Error => 422 Unprocessable Entity => "must not be blank"
+# POST /user HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#   "firstName": "",
+#   "lastName": "Avcik",
+#   "email": "sss@gmail.com",
+#   "password": "asdasd"
+# }
+
+/////////////////DELETE///////////////////////
+// Succesful scenario =>204 No Content
+# DELETE /user/0 HTTP/2
+# Host: localhost:8080
+
+// Error => 404 Not Found  => "User not found"  ( if user is not exist)
+# DELETE /user/0 HTTP/2
+# Host: localhost:8080
+
+////////////////////UPDATE/////////////////////
+
+# //Succesful scenario => 200 OK
+# PATCH /user/1 HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "email": "SametAvcik0@gmail.com"
+# }
+
+//Error => 422 Unprocessable Entity => "must not be blank" (inputs cannot be empty)
+# PATCH /user/1 HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "firstName": ""
+# }
+
+// Error =>  404 Not Found => "User not found" ( if user is not exist)
+# PATCH /user/3 HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "firstName": "name"
+# }
+
+//Error => 409 Conflict => "given value is already used by another user" (if we try to enter email that has been entered before)
+# PATCH /user/1 HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "email": "SametAvcik0@gmail.com"
+# }
+
+// Animal's situations
+
+/////////////////READ//////////////
+
+//Succesful scenario => 200 OK
+# GET /user/1/pets HTTP/2
+# Host: localhost:8080
+
+# GET /user/1/pets/0 HTTP/2
+# Host: localhost:8080
+
+// Error => 404 Not Found =>"No Pets found"
+# GET /user/1/pets/4 HTTP/2
+# Host: localhost:8080
+
+////////////////Create///////////////////
+
+// Succesful scenario = 201 Created
+# POST /user/1/pets HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "name":"Bello",
+#      "kind":"Hund"
+# }
+
+//Error => 409 Conflict =>  "given value is already used by another pet from this user"
+# POST /user/1/pets HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "name":"Bello",
+#      "kind":"Hund"
+# }
+
+//Error => 422 Unprocessable Entity =>  "must not be blank"
+# POST /user/1/pets HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "name":"",
+#      "kind":"Hund"
+# }
+
+//Error => 422 Unprocessable Entity =>  ""must be provided""
+# POST /user/1/pets HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#      "kind":"Hund"
+# }
+
+/////////////// ANIMAL_DELETE /////////////
+
+//Succesful scenario => 204 No Content
+# DELETE /user/1/pets/0 HTTP/2
+# Host: localhost:8080
+
+//Error => 404 Not Found => "Pet not found"
+# DELETE /user/1/pets/4 HTTP/2
 # Host: localhost:8080
 
 
-# "firstName":"knknk",
-#      "lastName":"asdasd",
-#       "email":"asdasd",
-#        "password":"asdasd"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
