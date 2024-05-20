@@ -8,26 +8,29 @@
 # Host: localhost:8080
 
 // Succesful scenario =>200 OK
-# GET /user/0 HTTP/2
+# GET /user/1 HTTP/2
+# Host: localhost:8080
+
+# GET /user?q=sam HTTP/2
 # Host: localhost:8080
 
 // Error => "User not found"  ( if user is not exist)
 # GET /user/2 HTTP/2
 # Host: localhost:8080
 
+
 //////////////// CREATE ////////////////////////
-
 # //Succesful scenario => 201 Created
-# POST /user HTTP/2
-# Host: localhost:8080
-# Content-Type: application/json
+POST /user HTTP/2
+Host: localhost:8080
+Content-Type: application/json
 
-# {
-#     "firstName": "Samet",
-#     "lastName": "Avcik",
-#     "email": "new@gmail.com",
-#     "password": "asdasd"
-# }
+{
+    "firstName": "sanane",
+    "lastName": "la",
+    "email": "yeniyim@gmail.com",
+    "password": "asdasd"
+}
 
 // Error => 422 Unprocessable Entity => "must be provided" (we have to enter all inputs)
 # POST /user HTTP/2

@@ -1,7 +1,7 @@
 // Per import Anweisung werden Bibliotheken oder andere Skripte geladen
 import * as express from 'express';
 import * as Path from "path";
-
+import * as mysql from 'mysql2/promise';
 
 class User {   // User Class
     id: string;
@@ -60,47 +60,95 @@ app.delete("/user/:id/pets/:animalid", deleteAnimal);
 
 app.use(notFound);
 
-function getUser(req: express.Request, res: express.Response): void {
+async function getConnection(): Promise<any> {
+    try {
+        // Veritabanı bağlantısını oluşturma
+        const connection = await mysql.createConnection({
+            user: 'samet.avcik@mnd.thm.de',
+            password: 'root',
+            database: 'savk77',
+            host: 'ip1-dbs.mni.thm.de',
+            port: 3306
+        });
+        return connection;
+    } catch (error) {
+        console.error("connection ERR:", error);
+    }
+}
+function closeConnection(connection:any):any{
+    if (connection) {
+        connection.close((err) => {
+            if (err) {
+                console.error('Bağlantı kapatma hatası:', err.message);
+            } else {
+                console.log('Bağlantı başarıyla kapatıldı.');
+            }
+        });
+    }
+}
+
+async function getUser(req: express.Request, res: express.Response) {
     const id: string = req.params.id;
     const search: string = req.query.q?.toString();
     const output = [];
 
     let userFound = false;
+    const database = await getConnection();
     if (id !== undefined) {
-        Array.from(Userlist.values()).forEach(user => {
-            if (user.id === id) {
+        const result =  await database.query("SELECT id, firstname, lastname, email FROM User WHERE id = ?", [id]).then(result => {
+            // Das RowDataPacket enthält bei SELECT-Abfragen die gewünschten Werte
+            const rows: mysql.RowDataPacket[] = result[0];
+            if (rows.length > 0) {
                 userFound = true;
                 output.push({
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
+                    id: rows[0].id,
+                    email: rows[0].email,
+                    firstName: rows[0].firstname,
+                    lastName: rows[0].lastname,
+                });
+            } 
+        }).catch(err => {
+            console.log(err);
+            res.sendStatus(500);
+        });
+    } else if (search !== undefined) {
+        const result = await database.query(
+            "SELECT id, firstname, lastname, email FROM User WHERE id LIKE ? OR email LIKE ? OR firstname LIKE ? OR lastname LIKE ?",
+            [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`]
+        ).then(result => {
+            const rows: mysql.RowDataPacket[] = result[0];
+            if (rows.length > 0) {
+                rows.forEach((user) => {
+                    output.push({
+                        id: user.id,
+                        email: user.email,
+                        firstName: user.firstname,
+                        lastName: user.lastname,
+                    });
                 });
             }
-        });
-        
-    } else if (search !== undefined) {
-        Userlist.forEach((s) => {
-            if (s.id.includes(search)|| s.email.includes(search) || s.firstName.includes(search) || s.lastName.includes(search)) {
-                output.push({
-                    id: s.id,
-                    email: s.email,
-                    firstName: s.firstName,
-                    lastName: s.lastName,
-                });
-            }            
+        }).catch(err => {
+            console.log(err);
+            res.sendStatus(500);
         });
     } else {
-        Userlist.forEach((user) => {
-            output.push({
-                id: user.id,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-            });
+        const result = await database.query("SELECT id, firstname, lastname, email FROM User").then(result => {
+            const rows: mysql.RowDataPacket[] = result[0];
+            if (rows.length > 0) {
+                rows.forEach((user) => {
+                    output.push({
+                        id: user.id,
+                        email: user.email,
+                        firstName: user.firstname,
+                        lastName: user.lastname,
+                    });
+                });
+            }
+        }).catch(err => {
+            console.log(err);
+            res.sendStatus(500);
         });
-        }
-    
+    }
     if (output.length > 0) {
         if(id === undefined || userFound){
             res.status(200);
@@ -110,6 +158,8 @@ function getUser(req: express.Request, res: express.Response): void {
     } else {
         notFound(req, res);
     }
+    //closeConnection(database);
+
 }
 
 function deleteUser(req: express.Request, res: express.Response): void {
@@ -131,10 +181,8 @@ function deleteUser(req: express.Request, res: express.Response): void {
     }
 }
 
-function checkFields(email:string,fName:string,lName:string,password:string,res: express.Response):any{
-    const output = [];
-    let errors: { [key: string]: string[] } = {};
-
+ async function checkFields(email:string,fName:string,lName:string,password:string,res: express.Response,database:any,output:any,errors:any){
+   
     if (email === undefined || fName === undefined || lName === undefined || password === undefined) {
         res.status(422);
         
@@ -152,12 +200,17 @@ function checkFields(email:string,fName:string,lName:string,password:string,res:
         }
     } else{
         if(email !== undefined && email != ""){
-            Array.from(Userlist.values()).forEach(user => {
-                if(user.email === email){
-                    errors['email'] = ['given value is already used by another user'];
-                    res.status(409);
-                }
-            });        
+            
+            const [rows] = await database.query(
+                "SELECT COUNT(*) as count FROM User WHERE email = ?",
+                [email]
+            );
+    
+            if (rows[0].count > 0) {
+                errors['email'] = ['given value is already used by another user'];
+                res.status(409);
+
+            }      
         }else{
             res.status(422);
             if(email == ""){
@@ -191,37 +244,47 @@ function checkFields(email:string,fName:string,lName:string,password:string,res:
                 res.status(422);
             }  
         }
-
-    
     } 
     const err = { errors };
     if(Object.keys(errors).length > 0){
         output.push(err)
     }
-    return output;
+    
 }
 
-function postUser(req: express.Request, res: express.Response): void {
+async function postUser(req: express.Request, res: express.Response) {
     const email: string = req.body.email;
     const fName: string = req.body.firstName;
     const lName: string = req.body.lastName;
     const password: string = req.body.password;    
-    const output = checkFields(email,fName,lName,password,res);
-    
-    if (output.length == 0) {
-        let user =  new User(id_counter.toString() ,fName, lName, email, password)
-        Userlist.set(email, user);
-        res.status(201);
-        res.location("/user/" + id_counter.toString())
-        output.push({
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-        });
-        id_counter++;
-    } 
 
+    const output = [];
+    let errors: { [key: string]: string[] } = {};
+
+    const database = await getConnection();
+    await checkFields(email,fName,lName,password,res,database,output,errors)
+    if (output.length == 0) {
+        const result = await database.query(
+            "INSERT INTO User (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
+            [fName, lName, email, password] 
+        ).then(result  => {
+            const rows: mysql.ResultSetHeader = result[0];
+            if(rows.affectedRows > 0){
+                res.status(201);
+                const userId = rows.insertId;
+                res.location("/user/")
+                output.push({
+                    id: userId,
+                    email: email,
+                    firstName: fName,
+                    lastName: lName,
+                });
+            }
+        }).catch(err => {
+            console.log(err);
+            res.sendStatus(500);
+        });
+    } 
     res.contentType("application/json");
     res.json(output);
 
