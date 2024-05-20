@@ -162,23 +162,20 @@ async function getUser(req: express.Request, res: express.Response) {
 
 }
 
-function deleteUser(req: express.Request, res: express.Response): void {
+async function deleteUser(req: express.Request, res: express.Response) {
     const user_id: string = req.params.id;
-    
     // Userlist'te kullanıcı var mı kontrol ediyoruz
-    let userFound = false;
-    Array.from(Userlist.values()).forEach(user => {
-        if (user.id === user_id) {
-            userFound = true;
-            // Kullanıcıyı Userlist'ten siliyoruz
-            Userlist.delete(user.email);
-            res.sendStatus(204);
-        }
+    const output = [];
+    const database = await getConnection();
+    const result = await database.query(
+        "DELETE FROM User WHERE id= ?",
+        [user_id] 
+    ).then(result  => {
+        res.sendStatus(204);
+    }).catch(err => {
+        console.log(err);
+        res.sendStatus(500);
     });
-
-    if (!userFound) {
-        notFound(req,res);
-    }
 }
 
  async function checkFields(email:string,fName:string,lName:string,password:string,res: express.Response,database:any,output:any,errors:any){
@@ -201,16 +198,20 @@ function deleteUser(req: express.Request, res: express.Response): void {
     } else{
         if(email !== undefined && email != ""){
             
-            const [rows] = await database.query(
+            const rows = await database.query(
                 "SELECT COUNT(*) as count FROM User WHERE email = ?",
                 [email]
-            );
+            ).then(result => {
+                const rows: mysql.RowDataPacket[] = result[0];
+                if (rows[0].count > 0) {
+                    errors['email'] = ['given value is already used by another user'];
+                    res.status(409);
+                }      
+            }).catch(err => {
+                console.log(err);
+                res.sendStatus(500);
+            });
     
-            if (rows[0].count > 0) {
-                errors['email'] = ['given value is already used by another user'];
-                res.status(409);
-
-            }      
         }else{
             res.status(422);
             if(email == ""){
@@ -290,15 +291,22 @@ async function postUser(req: express.Request, res: express.Response) {
 
 }
 
-function checkValues(email:string,fName:string,lName:string,password:string,user:User,errors:any,res: express.Response,output:any):any{
+async function checkValues(email:string,fName:string,lName:string,password:string,errors:any,res: express.Response,output:any,database:any){
     
     if(email !== undefined && email != ""){
-        Array.from(Userlist.values()).forEach(user => {
-            if(user.email === email){
+        const rows = await database.query(
+            "SELECT COUNT(*) as count FROM User WHERE email = ?",
+            [email]
+        ).then(result => {
+            const rows: mysql.RowDataPacket[] = result[0];
+            if (rows[0].count > 0) {
                 errors['email'] = ['given value is already used by another user'];
                 res.status(409);
-            }
-        });        
+            }      
+        }).catch(err => {
+            console.log(err);
+            res.sendStatus(500);
+        });
     }else{
         if(email == ""){
             errors['email'] = ['must not be blank'];
@@ -328,7 +336,7 @@ function checkValues(email:string,fName:string,lName:string,password:string,user
     return output
 }
 
-function patchUser(req: express.Request, res: express.Response): void {
+async function patchUser(req: express.Request, res: express.Response) {
     const id: string = req.params.id;
     const email: string = req.body.email;
     const fName: string = req.body.firstName;
@@ -337,103 +345,163 @@ function patchUser(req: express.Request, res: express.Response): void {
 
     let output = [];
     let errors: { [key: string]: string[] } = {};
+    const database = await getConnection();
 
     if(id !== undefined){
+        await checkValues(email,fName,lName,password,errors,res,output,database)
+        if(output.length == 0){
+            let updateFields = "";
+            const updateValues: any[] = [];
 
-        let userFound = false;
-        Array.from(Userlist.values()).forEach(user => {
-            if (user.id === id.toString()) {
-                userFound = true;
-                output = checkValues(email,fName,lName,password,user,errors,res,output)
-        
-                if(output.length == 0){
-                    if(email !== undefined){
-                        user.email = email;
-                    }
-                    if(fName !== undefined){
-                        user.firstName = fName
-                    }
-                    if(lName !== undefined){
-                        user.lastName = lName
-                    }
-                    if(password !== undefined){
-                        user.password = password
-                    }
-                    
-                    output.push({
-                        id: user.id,
-                        email: user.email,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                    });
-                    res.status(200);
-                }
+            // Güncellenecek alanları belirle
+            if (email) {
+                updateFields += "email = ?, ";
+                updateValues.push(email);
             }
-        });
-    
-        if (!userFound) {
-            notFound(req,res);
-        }else{
-            res.contentType("application/json");
-            res.json(output);  
+            if (fName) {
+                updateFields += "firstname = ?, ";
+                updateValues.push(fName);
+            }
+            if (lName) {
+                updateFields += "lastname = ?, ";
+                updateValues.push(lName);
+            }
+            if (password) {
+                updateFields += "password = ?, ";
+                updateValues.push(password);
+            }
+        // Son "," karakterini kaldır
+            updateFields = updateFields.slice(0, -2);
+            // UPDATE işlemi
+            const result = await database.query(
+                `UPDATE User SET ${updateFields} WHERE id = ?`,
+                [...updateValues, id]
+            ).then(result  => {
+                const rows: mysql.ResultSetHeader = result[0]; 
+
+                if(rows.affectedRows > 0){
+
+                    console.log(rows)
+                    res.location("/user/")
+                    output.push({
+                        id: id,
+                        email: email,
+                        firstName: fName,
+                        lastName: lName,
+                    });
+                }
+            }).catch(err => {
+                console.log(err);
+                res.sendStatus(500);
+            });
+
+            res.status(200);
         }
+
+        res.contentType("application/json");
+        res.json(output);  
         
-    }else{
-        notFound(req,res)
     }
-    
 }
 
-function getAnimals(req: express.Request, res: express.Response): void {
-    const id: string = req.params.id;
+async function getAnimals(req: express.Request, res: express.Response) {
+    const owner_id: string = req.params.id;
     const animal_id: string = req.params.animalid;
+    const search: string = req.query.q?.toString();
+
     const output = [];
     let userFound = false;
-    if (id !== undefined) {
-        Array.from(Userlist.values()).forEach(user => {
-            if (user.id === id) {
-                userFound = true;
-                if(animal_id === undefined){
-                    Array.from(user.animalList.values()).forEach(animal => {
+    const database = await getConnection();
+
+    if (owner_id !== undefined) {
+        const checkUser =  await database.query("SELECT COUNT(*) FROM User WHERE id = ?", [owner_id]).then(checkUser => {
+            const rows: mysql.RowDataPacket[] = checkUser[0];
+            if (parseInt(rows[0]['COUNT(*)'])  > 0) {
+                userFound = true
+            }
+            else{ 
+                userFound= false
+            }
+        }).catch(err => {
+            console.log(err);
+            res.sendStatus(500);
+        });
+
+        if(userFound){
+            const result = await database.query("SELECT id, name, kind, owner_id FROM Animal WHERE owner_id = ?", [owner_id]).then(result => {
+                const rows: mysql.RowDataPacket[] = result[0];
+
+                if (rows.length > 0) {
+                    rows.forEach((animal) => {
                         output.push({
                             id: animal.id,
                             name: animal.name,
-                            kind: animal.kind
+                            kind: animal.kind,
+                            owner_id: animal.owner_id,
                         });
                     });
-                }else{
-                    console
-                    Array.from(user.animalList.values()).forEach(animal => {
-                        if(animal_id === animal.id){
-                            output.push({
-                                id: animal.id,
-                                name: animal.name,
-                                kind: animal.kind
-                            });
-                        }
-                    });
                 }
-                
+            }).catch(err => {
+                console.log(err);
+                res.sendStatus(500);
+            });
+        }
+       
+
+    } else if (search !== undefined) {
+        const result = await database.query(
+            "SELECT id, name, kind, owner_id FROM Animal WHERE id LIKE ? OR name LIKE ? OR kind LIKE ? OR owner_id LIKE ?",
+            [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`]
+        ).then(result => {
+            const rows: mysql.RowDataPacket[] = result[0];
+            if (rows.length > 0) {
+                rows.forEach((user) => {
+                    output.push({
+                        id: user.id,
+                        firstName: user.firstname,
+                        lastName: user.lastname,
+                    });
+                });
             }
+        }).catch(err => {
+            console.log(err);
+            res.sendStatus(500);
         });
-        if(!userFound){
-            notFound(req,res)
-        }else{
-            if(output.length != 0){
-                res.status(200);
-                res.contentType("application/json");
-                res.json(output);
-            }else{
-                animalNotFound(req,res)
+    } else {
+        const result = await database.query("SELECT id, name, kind, owner_id FROM Animal").then(result => {
+            const rows: mysql.RowDataPacket[] = result[0];
+            if (rows.length > 0) {
+                rows.forEach((user) => {
+                    output.push({
+                        id: user.id,
+                        name: user.name,
+                        kind: user.kind,
+                    });
+                });
             }
-           
-        }   
-    }else{
-        notFound(req,res)
+        }).catch(err => {
+            console.log(err);
+            res.sendStatus(500);
+        });
+    }
+    if (output.length > 0) {
+        if(owner_id === undefined || userFound){
+            res.status(200);
+            res.contentType("application/json");
+            res.json(output);
+        }
+    } else {
+        if (!userFound) {
+            notFound(req, res);
+        }else{
+            animalNotFound(req, res);
+        }
+       
     }
 }
 
-function checkAnimalFields(animalList:Map<string, Animal>,errors:any,name:string,output:any,kind:string,res: express.Response):any{
+async function checkAnimalFields(errors:any,name:string,output:any,kind:string,owner_id:string, res: express.Response, database:any){
+
     if (name === undefined || kind === undefined) {
         res.status(422);
         if (name === undefined) {
@@ -445,12 +513,20 @@ function checkAnimalFields(animalList:Map<string, Animal>,errors:any,name:string
         
     }else{
         if(name !== undefined && name != ""){
-            Array.from(animalList.values()).forEach(animal => {
-                if(animal.name === name){
-                    errors['name'] = ['given value is already used by another pet from this user'];
+            const rows = await database.query(
+                "SELECT COUNT(*) FROM User, Animal WHERE owner_id = User.id AND User.id = ? AND name=?;",
+                [owner_id, name]
+            ).then(result => {
+                const rows: mysql.RowDataPacket[] = result[0];
+                if (rows[0]['COUNT(*)'] > 0) {
+                    errors['name'] = ['A user cannot have another animal with the same name.'];
                     res.status(409);
-                }
-            });        
+                }      
+            }).catch(err => {
+                console.log(err);
+                res.sendStatus(500);
+            });
+               
         }else{
             res.status(422);
             if(name == ""){
@@ -477,77 +553,55 @@ function checkAnimalFields(animalList:Map<string, Animal>,errors:any,name:string
     return output
 
 }
-
-function postAnimal(req: express.Request, res: express.Response): void {
-    const id: string = req.params.id;
+async function postAnimal(req: express.Request, res: express.Response){
+    const owner_id: string = req.params.id;
     const name: string = req.body.name;
     const kind: string = req.body.kind;
     let output = [];
     let errors: { [key: string]: string[] } = {};
-    let userFound = false;
-    if (id !== undefined) {
-        Array.from(Userlist.values()).forEach(user => {
-            if (user.id === id) {
-                userFound = true;
-                output = checkAnimalFields(user.animalList,errors,name,output,kind,res);
-                if(output.length == 0){
-                    let animal: Animal = new Animal(name, kind);
-                    animal.id = (user.animalList.size).toString()
-                    user.animalList.set(name,animal)
-                    output.push({
-                        id: animal.id,
-                        name: name,
-                        kind: kind
-                    });
-                    res.status(200);
-                }
-            }
-        });
-        if(!userFound){
-            notFound(req,res)
-        }else{
-            res.contentType("application/json");
-            res.json(output);
-        }
+    const database = await getConnection();
+    await checkAnimalFields(errors, name, output, kind, owner_id, res, database);
 
-    }else{
-        notFound(req,res)
-    }
-
-  
-}
-
-function deleteAnimal(req: express.Request, res: express.Response): void {
-    const id: string = req.params.id;
-    const animal_id: string = req.params.animalid;
-
-    let userFound = false;
-    let animalFound = false;
-    if (id !== undefined) {
-        Array.from(Userlist.values()).forEach(user => {
-            if (user.id === id) {
-                userFound = true;
-                
-                Array.from(user.animalList.values()).forEach(animal => {
-                    if(animal_id === animal.id){
-                        animalFound = true
-                        user.animalList.delete(animal.name)
-                        res.sendStatus(204);
-                    }
+    if (output.length == 0) {
+        const result = await database.query(
+            "INSERT INTO Animal (name, kind, owner_id) VALUES (?, ?, ?)",
+            [name, kind, owner_id] 
+        ).then(result  => {
+            const rows: mysql.ResultSetHeader = result[0];
+            if(rows.affectedRows > 0){
+                res.status(201);
+                const animalId = rows.insertId;
+                res.location("/user/")
+                output.push({
+                    id: animalId,
+                    name: name,
+                    kind: kind,
+                    owner_id: owner_id,
                 });
-               
             }
+        }).catch(err => {
+            console.log(err);
+            res.sendStatus(500);
         });
-        if(!userFound){
-            notFound(req,res)
-        }else if(!animalFound){
-            animalNotFound(req,res)
-        }
+    } 
+    res.contentType("application/json");
+    res.json(output);
+}
+async function deleteAnimal(req: express.Request, res: express.Response){
+    const animal_id: string = req.params.id;
+    console.log("animal_id:", animal_id);
+    const output = [];
+    const database = await getConnection();
 
-    }else{
-        notFound(req,res)
-    }
-
+    const result = await database.query(
+        "DELETE FROM Animal WHERE id= ? ",
+        [animal_id] 
+    ).then(result  => {
+        res.sendStatus(204);
+    }).catch(err => {
+        console.log(err);
+        res.sendStatus(500);
+    });
   
 }
 

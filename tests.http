@@ -3,7 +3,8 @@
 
 /////////////////////READ///////////////////
 
-// Succesful scenario =>200 OK
+
+# # // Succesful scenario =>200 OK
 # GET /user HTTP/2
 # Host: localhost:8080
 
@@ -18,19 +19,18 @@
 # GET /user/2 HTTP/2
 # Host: localhost:8080
 
-
 //////////////// CREATE ////////////////////////
 # //Succesful scenario => 201 Created
-POST /user HTTP/2
-Host: localhost:8080
-Content-Type: application/json
+# POST /user HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
 
-{
-    "firstName": "sanane",
-    "lastName": "la",
-    "email": "yeniyim@gmail.com",
-    "password": "asdasd"
-}
+# {
+#     "firstName": "sanane",
+#     "lastName": "la",
+#     "email": "yeniyim@gmail.com",
+#     "password": "asdasd"
+# }
 
 // Error => 422 Unprocessable Entity => "must be provided" (we have to enter all inputs)
 # POST /user HTTP/2
@@ -66,23 +66,26 @@ Content-Type: application/json
 # }
 
 /////////////////DELETE///////////////////////
-// Succesful scenario =>204 No Content
-# DELETE /user/0 HTTP/2
+# // Succesful scenario =>204 No Content
+# DELETE /user/5 HTTP/2
 # Host: localhost:8080
 
 // Error => 404 Not Found  => "User not found"  ( if user is not exist)
-# DELETE /user/0 HTTP/2
+# DELETE /user/5 HTTP/2
 # Host: localhost:8080
+
 
 ////////////////////UPDATE/////////////////////
 
-# //Succesful scenario => 200 OK
+
+# # //Succesful scenario => 200 OK
 # PATCH /user/1 HTTP/2
 # Host: localhost:8080
 # Content-Type: application/json
 
 # {
-#      "email": "SametAvcik0@gmail.com"
+#      "email": "degistimki@gmail.com",
+#      "firstName":"neue"
 # }
 
 //Error => 422 Unprocessable Entity => "must not be blank" (inputs cannot be empty)

@@ -35,6 +35,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // Per import Anweisung werden Bibliotheken oder andere Skripte geladen
 var express = require("express");
@@ -208,20 +217,28 @@ function getUser(req, res) {
     });
 }
 function deleteUser(req, res) {
-    var user_id = req.params.id;
-    // Userlist'te kullanıcı var mı kontrol ediyoruz
-    var userFound = false;
-    Array.from(Userlist.values()).forEach(function (user) {
-        if (user.id === user_id) {
-            userFound = true;
-            // Kullanıcıyı Userlist'ten siliyoruz
-            Userlist.delete(user.email);
-            res.sendStatus(204);
-        }
+    return __awaiter(this, void 0, void 0, function () {
+        var user_id, output, database, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    user_id = req.params.id;
+                    output = [];
+                    return [4 /*yield*/, getConnection()];
+                case 1:
+                    database = _a.sent();
+                    return [4 /*yield*/, database.query("DELETE FROM User WHERE id= ?", [user_id]).then(function (result) {
+                            res.sendStatus(204);
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 2:
+                    result = _a.sent();
+                    return [2 /*return*/];
+            }
+        });
     });
-    if (!userFound) {
-        notFound(req, res);
-    }
 }
 function checkFields(email, fName, lName, password, res, database, output, errors) {
     return __awaiter(this, void 0, void 0, function () {
@@ -246,13 +263,18 @@ function checkFields(email, fName, lName, password, res, database, output, error
                     return [3 /*break*/, 5];
                 case 1:
                     if (!(email !== undefined && email != "")) return [3 /*break*/, 3];
-                    return [4 /*yield*/, database.query("SELECT COUNT(*) as count FROM User WHERE email = ?", [email])];
+                    return [4 /*yield*/, database.query("SELECT COUNT(*) as count FROM User WHERE email = ?", [email]).then(function (result) {
+                            var rows = result[0];
+                            if (rows[0].count > 0) {
+                                errors['email'] = ['given value is already used by another user'];
+                                res.status(409);
+                            }
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
                 case 2:
-                    rows = (_a.sent())[0];
-                    if (rows[0].count > 0) {
-                        errors['email'] = ['Verilen email başka bir kullanıcı tarafından kullanılıyor'];
-                        res.status(409);
-                    }
+                    rows = _a.sent();
                     return [3 /*break*/, 4];
                 case 3:
                     res.status(422);
@@ -317,8 +339,6 @@ function postUser(req, res) {
                     return [4 /*yield*/, checkFields(email, fName, lName, password, res, database, output, errors)];
                 case 2:
                     _a.sent();
-                    console.log(output);
-                    console.log(output.length);
                     if (!(output.length == 0)) return [3 /*break*/, 4];
                     return [4 /*yield*/, database.query("INSERT INTO User (firstname, lastname, email, password) VALUES (?, ?, ?, ?)", [fName, lName, email, password]).then(function (result) {
                             var rows = result[0];
@@ -348,137 +368,234 @@ function postUser(req, res) {
         });
     });
 }
-function checkValues(email, fName, lName, password, user, errors, res, output) {
-    if (email !== undefined && email != "") {
-        Array.from(Userlist.values()).forEach(function (user) {
-            if (user.email === email) {
-                errors['email'] = ['given value is already used by another user'];
-                res.status(409);
+function checkValues(email, fName, lName, password, errors, res, output, database) {
+    return __awaiter(this, void 0, void 0, function () {
+        var rows, err;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!(email !== undefined && email != "")) return [3 /*break*/, 2];
+                    return [4 /*yield*/, database.query("SELECT COUNT(*) as count FROM User WHERE email = ?", [email]).then(function (result) {
+                            var rows = result[0];
+                            if (rows[0].count > 0) {
+                                errors['email'] = ['given value is already used by another user'];
+                                res.status(409);
+                            }
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 1:
+                    rows = _a.sent();
+                    return [3 /*break*/, 3];
+                case 2:
+                    if (email == "") {
+                        errors['email'] = ['must not be blank'];
+                        res.status(422);
+                    }
+                    if (fName == "") {
+                        errors['firstName'] = ['must not be blank'];
+                        res.status(422);
+                    }
+                    if (lName == "") {
+                        errors['lastName'] = ['must not be blank']; // mail normal baska bi field "" gelirse patlar
+                        res.status(422);
+                    }
+                    if (password == "") {
+                        errors['password'] = ['must not be blank'];
+                        res.status(422);
+                    }
+                    _a.label = 3;
+                case 3:
+                    err = { errors: errors };
+                    if (Object.keys(errors).length > 0) {
+                        output.push(err);
+                    }
+                    return [2 /*return*/, output];
             }
         });
-    }
-    else {
-        if (email == "") {
-            errors['email'] = ['must not be blank'];
-            res.status(422);
-        }
-        if (fName == "") {
-            errors['firstName'] = ['must not be blank'];
-            res.status(422);
-        }
-        if (lName == "") {
-            errors['lastName'] = ['must not be blank']; // mail normal baska bi field "" gelirse patlar
-            res.status(422);
-        }
-        if (password == "") {
-            errors['password'] = ['must not be blank'];
-            res.status(422);
-        }
-    }
-    var err = { errors: errors };
-    if (Object.keys(errors).length > 0) {
-        output.push(err);
-    }
-    return output;
+    });
 }
 function patchUser(req, res) {
-    var id = req.params.id;
-    var email = req.body.email;
-    var fName = req.body.firstName;
-    var lName = req.body.lastName;
-    var password = req.body.password;
-    var output = [];
-    var errors = {};
-    if (id !== undefined) {
-        var userFound_1 = false;
-        Array.from(Userlist.values()).forEach(function (user) {
-            if (user.id === id.toString()) {
-                userFound_1 = true;
-                output = checkValues(email, fName, lName, password, user, errors, res, output);
-                if (output.length == 0) {
-                    if (email !== undefined) {
-                        user.email = email;
+    return __awaiter(this, void 0, void 0, function () {
+        var id, email, fName, lName, password, output, errors, database, updateFields, updateValues, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    id = req.params.id;
+                    email = req.body.email;
+                    fName = req.body.firstName;
+                    lName = req.body.lastName;
+                    password = req.body.password;
+                    output = [];
+                    errors = {};
+                    return [4 /*yield*/, getConnection()];
+                case 1:
+                    database = _a.sent();
+                    if (!(id !== undefined)) return [3 /*break*/, 5];
+                    return [4 /*yield*/, checkValues(email, fName, lName, password, errors, res, output, database)];
+                case 2:
+                    _a.sent();
+                    if (!(output.length == 0)) return [3 /*break*/, 4];
+                    updateFields = "";
+                    updateValues = [];
+                    // Güncellenecek alanları belirle
+                    if (email) {
+                        updateFields += "email = ?, ";
+                        updateValues.push(email);
                     }
-                    if (fName !== undefined) {
-                        user.firstName = fName;
+                    if (fName) {
+                        updateFields += "firstname = ?, ";
+                        updateValues.push(fName);
                     }
-                    if (lName !== undefined) {
-                        user.lastName = lName;
+                    if (lName) {
+                        updateFields += "lastname = ?, ";
+                        updateValues.push(lName);
                     }
-                    if (password !== undefined) {
-                        user.password = password;
+                    if (password) {
+                        updateFields += "password = ?, ";
+                        updateValues.push(password);
                     }
-                    output.push({
-                        id: user.id,
-                        email: user.email,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                    });
+                    // Son "," karakterini kaldır
+                    updateFields = updateFields.slice(0, -2);
+                    return [4 /*yield*/, database.query("UPDATE User SET ".concat(updateFields, " WHERE id = ?"), __spreadArray(__spreadArray([], updateValues, true), [id], false)).then(function (result) {
+                            var rows = result[0];
+                            if (rows.affectedRows > 0) {
+                                console.log(rows);
+                                res.location("/user/");
+                                output.push({
+                                    id: id,
+                                    email: email,
+                                    firstName: fName,
+                                    lastName: lName,
+                                });
+                            }
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 3:
+                    result = _a.sent();
                     res.status(200);
-                }
+                    _a.label = 4;
+                case 4:
+                    res.contentType("application/json");
+                    res.json(output);
+                    _a.label = 5;
+                case 5: return [2 /*return*/];
             }
         });
-        if (!userFound_1) {
-            notFound(req, res);
-        }
-        else {
-            res.contentType("application/json");
-            res.json(output);
-        }
-    }
-    else {
-        notFound(req, res);
-    }
+    });
 }
 function getAnimals(req, res) {
-    var id = req.params.id;
-    var animal_id = req.params.animalid;
-    var output = [];
-    var userFound = false;
-    if (id !== undefined) {
-        Array.from(Userlist.values()).forEach(function (user) {
-            if (user.id === id) {
-                userFound = true;
-                if (animal_id === undefined) {
-                    Array.from(user.animalList.values()).forEach(function (animal) {
-                        output.push({
-                            id: animal.id,
-                            name: animal.name,
-                            kind: animal.kind
-                        });
-                    });
-                }
-                else {
-                    console;
-                    Array.from(user.animalList.values()).forEach(function (animal) {
-                        if (animal_id === animal.id) {
-                            output.push({
-                                id: animal.id,
-                                name: animal.name,
-                                kind: animal.kind
+    var _a;
+    return __awaiter(this, void 0, void 0, function () {
+        var owner_id, animal_id, search, output, userFound, database, checkUser, result, result, result;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    owner_id = req.params.id;
+                    animal_id = req.params.animalid;
+                    search = (_a = req.query.q) === null || _a === void 0 ? void 0 : _a.toString();
+                    output = [];
+                    userFound = false;
+                    return [4 /*yield*/, getConnection()];
+                case 1:
+                    database = _b.sent();
+                    if (!(owner_id !== undefined)) return [3 /*break*/, 5];
+                    return [4 /*yield*/, database.query("SELECT COUNT(*) FROM User WHERE id = ?", [owner_id]).then(function (checkUser) {
+                            var rows = checkUser[0];
+                            if (parseInt(rows[0]['COUNT(*)']) > 0) {
+                                userFound = true;
+                            }
+                            else {
+                                userFound = false;
+                            }
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 2:
+                    checkUser = _b.sent();
+                    if (!userFound) return [3 /*break*/, 4];
+                    return [4 /*yield*/, database.query("SELECT id, name, kind, owner_id FROM Animal WHERE owner_id = ?", [owner_id]).then(function (result) {
+                            var rows = result[0];
+                            if (rows.length > 0) {
+                                rows.forEach(function (animal) {
+                                    output.push({
+                                        id: animal.id,
+                                        name: animal.name,
+                                        kind: animal.kind,
+                                        owner_id: animal.owner_id,
+                                    });
+                                });
+                            }
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 3:
+                    result = _b.sent();
+                    _b.label = 4;
+                case 4: return [3 /*break*/, 9];
+                case 5:
+                    if (!(search !== undefined)) return [3 /*break*/, 7];
+                    return [4 /*yield*/, database.query("SELECT id, name, kind, owner_id FROM Animal WHERE id LIKE ? OR name LIKE ? OR kind LIKE ? OR owner_id LIKE ?", ["%".concat(search, "%"), "%".concat(search, "%"), "%".concat(search, "%"), "%".concat(search, "%")]).then(function (result) {
+                            var rows = result[0];
+                            if (rows.length > 0) {
+                                rows.forEach(function (user) {
+                                    output.push({
+                                        id: user.id,
+                                        firstName: user.firstname,
+                                        lastName: user.lastname,
+                                    });
+                                });
+                            }
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 6:
+                    result = _b.sent();
+                    return [3 /*break*/, 9];
+                case 7: return [4 /*yield*/, database.query("SELECT id, name, kind, owner_id FROM Animal").then(function (result) {
+                        var rows = result[0];
+                        if (rows.length > 0) {
+                            rows.forEach(function (user) {
+                                output.push({
+                                    id: user.id,
+                                    name: user.name,
+                                    kind: user.kind,
+                                });
                             });
                         }
-                    });
-                }
+                    }).catch(function (err) {
+                        console.log(err);
+                        res.sendStatus(500);
+                    })];
+                case 8:
+                    result = _b.sent();
+                    _b.label = 9;
+                case 9:
+                    if (output.length > 0) {
+                        if (owner_id === undefined || userFound) {
+                            res.status(200);
+                            res.contentType("application/json");
+                            res.json(output);
+                        }
+                    }
+                    else {
+                        if (!userFound) {
+                            notFound(req, res);
+                        }
+                        else {
+                            animalNotFound(req, res);
+                        }
+                    }
+                    return [2 /*return*/];
             }
         });
-        if (!userFound) {
-            notFound(req, res);
-        }
-        else {
-            if (output.length != 0) {
-                res.status(200);
-                res.contentType("application/json");
-                res.json(output);
-            }
-            else {
-                animalNotFound(req, res);
-            }
-        }
-    }
-    else {
-        notFound(req, res);
-    }
+    });
 }
 function checkAnimalFields(animalList, errors, name, output, kind, res) {
     if (name === undefined || kind === undefined) {
