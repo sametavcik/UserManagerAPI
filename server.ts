@@ -9,7 +9,6 @@ class User {   // User Class
     firstName: string;
     lastName: string;
     password: string;
-    animalList: Map<string, Animal> = new Map<string, Animal>();
     constructor(id: string, fName: string, lName: string, email: string,password:string ){
         this.id = id;
         this.firstName = fName;
@@ -30,9 +29,6 @@ class Animal { // Animal Class
         this.kind = kind;
     }
 }
-const Userlist: Map<string, User> = new Map();
-let id_counter = 0;
-
 
 const app: express.Express = express();
 app.listen(8080);

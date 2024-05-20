@@ -51,7 +51,6 @@ var Path = require("path");
 var mysql = require("mysql2/promise");
 var User = /** @class */ (function () {
     function User(id, fName, lName, email, password) {
-        this.animalList = new Map();
         this.id = id;
         this.firstName = fName;
         this.lastName = lName;
@@ -67,8 +66,6 @@ var Animal = /** @class */ (function () {
     }
     return Animal;
 }());
-var Userlist = new Map();
-var id_counter = 0;
 var app = express();
 app.listen(8080);
 app.use(express.json());
@@ -597,111 +594,132 @@ function getAnimals(req, res) {
         });
     });
 }
-function checkAnimalFields(animalList, errors, name, output, kind, res) {
-    if (name === undefined || kind === undefined) {
-        res.status(422);
-        if (name === undefined) {
-            errors['name'] = ['must be provided'];
-        }
-        if (kind === undefined) {
-            errors['kind'] = ['must be provided'];
-        }
-    }
-    else {
-        if (name !== undefined && name != "") {
-            Array.from(animalList.values()).forEach(function (animal) {
-                if (animal.name === name) {
-                    errors['name'] = ['given value is already used by another pet from this user'];
-                    res.status(409);
-                }
-            });
-        }
-        else {
-            res.status(422);
-            if (name == "") {
-                errors['name'] = ['must not be blank'];
+function checkAnimalFields(errors, name, output, kind, owner_id, res, database) {
+    return __awaiter(this, void 0, void 0, function () {
+        var rows, err;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!(name === undefined || kind === undefined)) return [3 /*break*/, 1];
+                    res.status(422);
+                    if (name === undefined) {
+                        errors['name'] = ['must be provided'];
+                    }
+                    if (kind === undefined) {
+                        errors['kind'] = ['must be provided'];
+                    }
+                    return [3 /*break*/, 5];
+                case 1:
+                    if (!(name !== undefined && name != "")) return [3 /*break*/, 3];
+                    return [4 /*yield*/, database.query("SELECT COUNT(*) FROM User, Animal WHERE owner_id = User.id AND User.id = ? AND name=?;", [owner_id, name]).then(function (result) {
+                            var rows = result[0];
+                            if (rows[0]['COUNT(*)'] > 0) {
+                                errors['name'] = ['A user cannot have another animal with the same name.'];
+                                res.status(409);
+                            }
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 2:
+                    rows = _a.sent();
+                    return [3 /*break*/, 4];
+                case 3:
+                    res.status(422);
+                    if (name == "") {
+                        errors['name'] = ['must not be blank'];
+                    }
+                    if (kind == "") {
+                        errors['kind'] = ['must not be blank'];
+                    }
+                    _a.label = 4;
+                case 4:
+                    if (!errors.hasOwnProperty("kind")) {
+                        if (kind == "") {
+                            errors['kind'] = ['must not be blank'];
+                        }
+                    }
+                    _a.label = 5;
+                case 5:
+                    err = { errors: errors };
+                    if (Object.keys(errors).length > 0) {
+                        output.push(err);
+                    }
+                    return [2 /*return*/, output];
             }
-            if (kind == "") {
-                errors['kind'] = ['must not be blank'];
-            }
-        }
-        if (!errors.hasOwnProperty("kind")) {
-            if (kind == "") {
-                errors['kind'] = ['must not be blank'];
-            }
-        }
-    }
-    var err = { errors: errors };
-    if (Object.keys(errors).length > 0) {
-        output.push(err);
-    }
-    return output;
+        });
+    });
 }
 function postAnimal(req, res) {
-    var id = req.params.id;
-    var name = req.body.name;
-    var kind = req.body.kind;
-    var output = [];
-    var errors = {};
-    var userFound = false;
-    if (id !== undefined) {
-        Array.from(Userlist.values()).forEach(function (user) {
-            if (user.id === id) {
-                userFound = true;
-                output = checkAnimalFields(user.animalList, errors, name, output, kind, res);
-                if (output.length == 0) {
-                    var animal = new Animal(name, kind);
-                    animal.id = (user.animalList.size).toString();
-                    user.animalList.set(name, animal);
-                    output.push({
-                        id: animal.id,
-                        name: name,
-                        kind: kind
-                    });
-                    res.status(200);
-                }
+    return __awaiter(this, void 0, void 0, function () {
+        var owner_id, name, kind, output, errors, database, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    owner_id = req.params.id;
+                    name = req.body.name;
+                    kind = req.body.kind;
+                    output = [];
+                    errors = {};
+                    return [4 /*yield*/, getConnection()];
+                case 1:
+                    database = _a.sent();
+                    return [4 /*yield*/, checkAnimalFields(errors, name, output, kind, owner_id, res, database)];
+                case 2:
+                    _a.sent();
+                    if (!(output.length == 0)) return [3 /*break*/, 4];
+                    return [4 /*yield*/, database.query("INSERT INTO Animal (name, kind, owner_id) VALUES (?, ?, ?)", [name, kind, owner_id]).then(function (result) {
+                            var rows = result[0];
+                            if (rows.affectedRows > 0) {
+                                res.status(201);
+                                var animalId = rows.insertId;
+                                res.location("/user/");
+                                output.push({
+                                    id: animalId,
+                                    name: name,
+                                    kind: kind,
+                                    owner_id: owner_id,
+                                });
+                            }
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 3:
+                    result = _a.sent();
+                    _a.label = 4;
+                case 4:
+                    res.contentType("application/json");
+                    res.json(output);
+                    return [2 /*return*/];
             }
         });
-        if (!userFound) {
-            notFound(req, res);
-        }
-        else {
-            res.contentType("application/json");
-            res.json(output);
-        }
-    }
-    else {
-        notFound(req, res);
-    }
+    });
 }
 function deleteAnimal(req, res) {
-    var id = req.params.id;
-    var animal_id = req.params.animalid;
-    var userFound = false;
-    var animalFound = false;
-    if (id !== undefined) {
-        Array.from(Userlist.values()).forEach(function (user) {
-            if (user.id === id) {
-                userFound = true;
-                Array.from(user.animalList.values()).forEach(function (animal) {
-                    if (animal_id === animal.id) {
-                        animalFound = true;
-                        user.animalList.delete(animal.name);
-                        res.sendStatus(204);
-                    }
-                });
+    return __awaiter(this, void 0, void 0, function () {
+        var animal_id, output, database, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    animal_id = req.params.id;
+                    console.log("animal_id:", animal_id);
+                    output = [];
+                    return [4 /*yield*/, getConnection()];
+                case 1:
+                    database = _a.sent();
+                    return [4 /*yield*/, database.query("DELETE FROM Animal WHERE id= ? ", [animal_id]).then(function (result) {
+                            res.sendStatus(204);
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 2:
+                    result = _a.sent();
+                    return [2 /*return*/];
             }
         });
-        if (!userFound) {
-            notFound(req, res);
-        }
-        else if (!animalFound) {
-            animalNotFound(req, res);
-        }
-    }
-    else {
-        notFound(req, res);
-    }
+    });
 }
 function notFound(req, res) {
     var output = [];
