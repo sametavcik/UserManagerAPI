@@ -1,0 +1,173 @@
+
+# ----------------------------------------------------
+# ---------------USER SCENARIOS-----------------------
+
+# ---------------READ OPERATION-----------------------
+# 200 RESPONSE => READ SUCCESFULL => Get all user. 
+# GET /user HTTP/1.1
+# Host: localhost:8080
+
+# 200 RESPONSE => READ SUCCESFULL => Get the user info from id. 
+# GET /user/0 HTTP/1.1
+# Host: localhost:8080
+# 404 RESPONSE => READ ERROR => User not found.404
+# GET /user/5 HTTP/1.1
+# Host: localhost:8080
+
+# --------------CREATE OPERATION------------------------
+# 201 CREATED RESPONSE => POST SUCCESFULL => Add a new user according to the given info.
+# POST /user HTTP/2
+# Host:localhost:8080
+# Content-Type: application/json
+
+# {
+#   "firstName": "ss",
+#   "lastName": "ff",
+#   "email": "pamela@hotmail.com",
+#   "password": "yyy"
+# }
+
+# POST ERROR =>  422 Unprocessable Entity ERROR => All fields must be written.
+# POST /user HTTP/2
+# Host:localhost:8080
+# Content-Type: application/json
+
+# {
+#   "firstName": "Gözde",
+#   "lastName": "Sönmez"
+# }
+
+# # POST ERROR => 422 Unprocessable Entity ERROR => Password/Mail/Lastname/Firstname must not be blank.
+# POST /user HTTP/2
+# Host:localhost:8080
+# Content-Type: application/json
+
+# {
+#   "firstName": "Gizem",
+#   "lastName": "Sönmez",
+#   "email": "gizemduygu@hotmail.com",
+#   "password": ""
+# }
+
+# POST ERROR => 409 Conflict ERROR=> If the same email want to be added, it gives an error.
+# POST /user HTTP/2
+# Host:localhost:8080
+# Content-Type: application/json
+
+# {
+#   "firstName": "Mete",
+#   "lastName": "Acıkgöz",
+#   "email": "gizemduygu@hotmail.com",
+#   "password": "---"
+# }
+
+# --------------UPDATE OPERATION------------------------
+# 200 RESPONSE => PATCH SUCCESFULL => Edit a user.
+# PATCH /user/0 HTTP/1.1
+# Host:localhost:8080
+# Content-Type: application/json
+
+# {
+#   "firstName": "Duygu"
+# }
+
+# PATCH ERROR => 404 ERROR => User not found / if the user doesn't exist, it cannot update.  
+# PATCH /user/12 HTTP/1.1
+# Host:localhost:8080
+# Content-Type: application/json
+
+# {
+#   "firstName": "Duygu"
+# }
+
+# # PATCH ERROR => 422 ERROR => Password/Mail/Lastname/Firstname must not be blank.
+# PATCH /user/1 HTTP/1.1
+# Host:localhost:8080
+# Content-Type: application/json
+
+# {
+#   "firstName": ""
+# }
+
+# PATCH ERROR => 409 ERROR => If an email is used for one user, it cannot be added again. Because email addresses must be unique. 
+# "given value is already used by another user"
+# PATCH /user/0 HTTP/1.1
+# Host:localhost:8080
+# Content-Type: application/json
+
+# {
+#   "email": "manuel.groh@mni.thm.de"
+# }
+
+# --------------DELETE OPERATION------------------------
+#USER DELETE OPERATIONS ARE AT THE END OF THE FILE TO AVOID ERRORS.
+
+
+# --------------PETS SCENARIOS---------------------------
+
+# --------------READ OPERATION---------------------------
+# # 200 RESPONSE => READ SUCCESFULL => Get all pets of user who has id=0. 
+# GET /user/2/pets HTTP/2
+# Host: localhost:8080
+
+# 404 RESPONSE => No user found so not pets found.
+# The user who has id 1 not found, we've to create it. 
+# GET /user/1/pets HTTP/2
+# Host: localhost:8080
+
+# --------------CREATE OPERATION---------------------------
+# 201 CREATED => POST SUCCESFULL => Add a new pet according to the given info to spesific user. 
+# POST /user/0/pets HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#     "name": "Chickie",
+#     "kind": "bird"  
+# }
+
+# 409 CONFLICT ERROR => "Given value is already used by another pet from this user"
+POST /user/1/pets HTTP/2
+Host: localhost:8080
+Content-Type: application/json
+
+{
+    "name": "Chickie",
+    "kind": "bird"  
+}
+
+# 422 UNPROCESSABLE ENTITY ERROR =>  "Must not be blank"
+# POST /user/0/pets HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#   "name": "",
+#   "kind": "bird"
+# }
+
+# 422  UNPROCESSABLE ENTITY ERROR =>  ""Must be provided""
+# POST /user/0/pets HTTP/2
+# Host: localhost:8080
+# Content-Type: application/json
+
+# {
+#   "name": "Buddy"
+# }
+
+# --------------DELETE OPERATION---------------------------
+# 204 NO CONTENT RESPONSE => DELETE SUCCESSFULL => Delete the user who has the given id. 
+# DELETE /user/0/pets/0 HTTP/2
+# Host: localhost:8080
+
+# 404 NOT FOUND ERROR => "Pet not found."
+# DELETE /user/0/pets/3 HTTP/2
+# Host: localhost:8080
+
+# # 200 RESPONSE => DELETE SUCCESSFULL => Delete the user who has the given id. 
+# DELETE /user/2 HTTP/2
+# Host: localhost:8080
+
+# # 404 RESPONSE => DELETE ERROR => User not found.
+# DELETE /user/10 HTTP/2
+# Host: localhost:8080

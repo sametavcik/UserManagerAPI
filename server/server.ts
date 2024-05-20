@@ -1,7 +1,9 @@
-// Per import Anweisung werden Bibliotheken oder andere Skripte geladen
+
 import * as express from 'express';
 import * as Path from "path";
 import * as mysql from 'mysql2/promise';
+import { Session } from 'inspector';
+const cors = require('cors');
 
 class User {   // User Class
     id: string;
@@ -31,14 +33,43 @@ class Animal { // Animal Class
 }
 
 const app: express.Express = express();
+app.use(cors({
+    origin: 'http://127.0.0.1:5500', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.listen(8080);
 
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
+
 app.get('/', (req: express.Request, res: express.Response) => {
-    res.sendFile(Path.join(__dirname, '/public/index.html'));
+    res.sendFile(Path.join(__dirname, '/login.html'));
 })
+
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    console.log("server ts login");
+    try {
+        const database = await getConnection();
+        const [rows] = await database.query(
+            "SELECT * FROM User WHERE email=? AND password=?", 
+            [email, password]
+        );
+        
+        if (rows.length > 0) {
+            console.log("Login success");
+            res.sendStatus(200);
+        } else {
+            res.status(404).send("Email or password are incorrect.");
+        }
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+});
 
 app.use("/ressources", express.static("public"));
 app.use("/ressources/bootstrap", express.static("public/node_modules/bootstrap/dist/css"));

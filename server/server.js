@@ -45,10 +45,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// Per import Anweisung werden Bibliotheken oder andere Skripte geladen
 var express = require("express");
 var Path = require("path");
 var mysql = require("mysql2/promise");
+var cors = require('cors');
 var User = /** @class */ (function () {
     function User(id, fName, lName, email, password) {
         this.id = id;
@@ -67,12 +67,51 @@ var Animal = /** @class */ (function () {
     return Animal;
 }());
 var app = express();
+app.use(cors({
+    origin: 'http://127.0.0.1:5500',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.listen(8080);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.get('/', function (req, res) {
-    res.sendFile(Path.join(__dirname, '/public/index.html'));
+    res.sendFile(Path.join(__dirname, '/login.html'));
 });
+app.post('/login', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, email, password, database, rows, err_1;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _a = req.body, email = _a.email, password = _a.password;
+                console.log("server ts login");
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 4, , 5]);
+                return [4 /*yield*/, getConnection()];
+            case 2:
+                database = _b.sent();
+                return [4 /*yield*/, database.query("SELECT * FROM User WHERE email=? AND password=?", [email, password])];
+            case 3:
+                rows = (_b.sent())[0];
+                if (rows.length > 0) {
+                    console.log("Login success");
+                    res.sendStatus(200);
+                }
+                else {
+                    res.status(404).send("Email or password are incorrect.");
+                }
+                return [3 /*break*/, 5];
+            case 4:
+                err_1 = _b.sent();
+                console.error(err_1);
+                res.sendStatus(500);
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); });
 app.use("/ressources", express.static("public"));
 app.use("/ressources/bootstrap", express.static("public/node_modules/bootstrap/dist/css"));
 app.get("/user/:id", getUser);
@@ -124,9 +163,9 @@ function closeConnection(connection) {
     }
 }
 function getUser(req, res) {
-    var _a;
     return __awaiter(this, void 0, void 0, function () {
         var id, search, output, userFound, database, result, result, result;
+        var _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -485,9 +524,9 @@ function patchUser(req, res) {
     });
 }
 function getAnimals(req, res) {
-    var _a;
     return __awaiter(this, void 0, void 0, function () {
         var owner_id, animal_id, search, output, userFound, database, checkUser, result, result, result;
+        var _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
