@@ -49,6 +49,7 @@ var express = require("express");
 var Path = require("path");
 var mysql = require("mysql2/promise");
 var cors = require('cors');
+var session = require('express-session');
 var User = /** @class */ (function () {
     function User(id, fName, lName, email, password) {
         this.id = id;
@@ -76,6 +77,16 @@ app.use(cors({
 app.listen(8080);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(session({
+    secret: 'your_secret_key', // Güvenli bir secret key kullanın
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 60 * 60 * 1000, // 1 saat
+        sameSite: true,
+        secure: false // HTTPS kullanıyorsanız true yapın
+    }
+}));
 app.get('/', function (req, res) {
     res.sendFile(Path.join(__dirname, '/login.html'));
 });
@@ -85,7 +96,6 @@ app.post('/login', function (req, res) { return __awaiter(void 0, void 0, void 0
         switch (_b.label) {
             case 0:
                 _a = req.body, email = _a.email, password = _a.password;
-                console.log("server ts login");
                 _b.label = 1;
             case 1:
                 _b.trys.push([1, 4, , 5]);
@@ -96,8 +106,11 @@ app.post('/login', function (req, res) { return __awaiter(void 0, void 0, void 0
             case 3:
                 rows = (_b.sent())[0];
                 if (rows.length > 0) {
-                    console.log("Login success");
-                    res.sendStatus(200);
+                    console.log(rows[0]);
+                    req.session.userId = rows[0].id;
+                    console.log("User Id:", req.session.userId);
+                    console.log(req.session.sessionID); // Oturum kimliğini çerez olarak gönderme
+                    res.status(200).send("Success"); // Örnek cevap gönderme
                 }
                 else {
                     res.status(404).send("Email or password are incorrect.");
@@ -132,9 +145,9 @@ function getConnection() {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
                     return [4 /*yield*/, mysql.createConnection({
-                            user: 'samet.avcik@mnd.thm.de',
-                            password: 'root',
-                            database: 'savk77',
+                            user: 'gizem.duygu.soenmez@mnd.thm.de',
+                            password: 'KGVGO[R1CylZOP@F',
+                            database: 'gdsn02',
                             host: 'ip1-dbs.mni.thm.de',
                             port: 3306
                         })];
@@ -169,7 +182,9 @@ function getUser(req, res) {
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    id = req.params.id;
+                    console.log(req.session.sessionID); // Oturum kimliğini çerez olarak gönderme
+                    id = req.session.userId;
+                    console.log("getUser id:", id);
                     search = (_a = req.query.q) === null || _a === void 0 ? void 0 : _a.toString();
                     output = [];
                     userFound = false;
@@ -188,6 +203,7 @@ function getUser(req, res) {
                                     firstName: rows[0].firstname,
                                     lastName: rows[0].lastname,
                                 });
+                                console.log("output:", output);
                             }
                         }).catch(function (err) {
                             console.log(err);

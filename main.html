@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Usermanager Client only</title>
 
-    <script type="text/javascript" src="userman.js" defer></script>
-    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="node_modules/@fortawesome/fontawesome-free/css/all.css">
+    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="/public/css/bootstrap.min.css">
+    <!--<link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css">-->
+    
+    <link rel="stylesheet" href="/node_modules/@fortawesome/fontawesome-free/css/all.css">
     <style> 
         table{
             background-color: aliceblue;
@@ -46,43 +46,6 @@
         <div class="row">
             <div class="col text-center">
                 <h1>Usermanager</h1>
-            </div>
-        </div>
-
-        <!--ADD NEW USER PANEL-->
-        <div class="row">
-            <div class="col">
-                <div class="row">
-                    <div class="col text-center">
-                        <h5>Nutzer hinzufügen</h5>
-                    </div>
-                </div>
-                <form id="formInput">
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Vor- und Nachname</span>
-                        </div>
-                        <input type="text" class="form-control" placeholder="Vorname" name="firstname"
-                               aria-label="Vorname" required>
-                        <input type="text" class="form-control" placeholder="Nachname" name="lastname"
-                               aria-label="Nachname" required>
-                    </div>
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Email</span>
-                        </div>
-                        <input type="email" class="form-control" placeholder="Email" name="email"
-                               aria-label="Email" required>
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Passwort</span>
-                        </div>
-                        <input type="password" class="form-control" placeholder="Passwort" name="password"
-                               aria-label="Passwort" required>
-                    </div>
-                    <div class="input-group mb-3">
-                        <button type="submit" class="btn btn-info">Hinzufügen</button>
-                    </div>
-                </form>
             </div>
         </div>
 

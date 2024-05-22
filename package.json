@@ -3,12 +3,15 @@
   "version": "1.1.0",
   "dependencies": {
     "@types/node": "^20.12.12",
+    "connect-mysql2": "^2.2.6",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "express-session": "^1.18.0",
     "mysql2": "^3.9.7",
     "typescript": "^5.4.5"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21"
+    "@types/express": "^4.17.21",
+    "@types/express-session": "^1.18.0"
   }
 }

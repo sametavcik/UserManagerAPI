@@ -43,29 +43,41 @@ document.addEventListener("DOMContentLoaded", function () {
     userEmail = document.querySelector("#userEmail");
     userPassword = document.querySelector("#userPassword");
     loginForm.addEventListener("submit", function (event) { return __awaiter(_this, void 0, void 0, function () {
-        var email, password, response, errorText, error_1;
+        var email, password;
+        return __generator(this, function (_a) {
+            event.preventDefault();
+            email = userEmail.value;
+            password = userPassword.value;
+            console.log("email", email);
+            console.log("password", password);
+            login(email, password);
+            return [2 /*return*/];
+        });
+    }); });
+});
+function login(email, password) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, errorText, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    event.preventDefault();
-                    email = userEmail.value;
-                    password = userPassword.value;
-                    console.log("email", email);
-                    console.log("password", password);
-                    _a.label = 1;
-                case 1:
-                    _a.trys.push([1, 6, , 7]);
+                    _a.trys.push([0, 6, , 7]);
                     return [4 /*yield*/, fetch('http://localhost:8080/login', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({ email: email, password: password }),
+                            credentials: 'include' // Oturum bilgilerini istekle birlikte gönder
                         })];
-                case 2:
+                case 1:
                     response = _a.sent();
-                    if (!response.ok) return [3 /*break*/, 3];
+                    if (!(response === null || response === void 0 ? void 0 : response.ok)) return [3 /*break*/, 3];
                     console.log("Login successful");
+                    console.log(response);
+                    return [4 /*yield*/, fetchUserData()];
+                case 2:
+                    _a.sent();
                     return [3 /*break*/, 5];
                 case 3: return [4 /*yield*/, response.text()];
                 case 4:
@@ -80,5 +92,38 @@ document.addEventListener("DOMContentLoaded", function () {
                 case 7: return [2 /*return*/];
             }
         });
-    }); });
-});
+    });
+}
+function fetchUserData() {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, userData, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 5, , 6]);
+                    console.log("Fetch user");
+                    return [4 /*yield*/, fetch("http://localhost:8080/user", {
+                            credentials: "include" // Oturum bilgilerini istekle birlikte gönder
+                        })];
+                case 1:
+                    response = _a.sent();
+                    if (!(response === null || response === void 0 ? void 0 : response.ok)) return [3 /*break*/, 3];
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    userData = _a.sent();
+                    console.log("User data:", userData);
+                    return [3 /*break*/, 4];
+                case 3:
+                    console.error("Failed to fetch user data");
+                    _a.label = 4;
+                case 4: return [3 /*break*/, 6];
+                case 5:
+                    error_2 = _a.sent();
+                    console.error("An error occurred:", error_2);
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
+            }
+        });
+    });
+}
+// Başarılı girişten sonra getUser işlevini çağırın

@@ -1,9 +1,16 @@
-
 import * as express from 'express';
 import * as Path from "path";
 import * as mysql from 'mysql2/promise';
 import { Session } from 'inspector';
+
 const cors = require('cors');
+const session = require('express-session');
+
+declare module 'express-session' {
+    interface Session {
+    userId: string; 
+    }
+  }
 
 class User {   // User Class
     id: string;
@@ -43,15 +50,24 @@ app.listen(8080);
 
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
-
+app.use(session({
+    secret: 'your_secret_key', // Güvenli bir secret key kullanın
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 60 * 60 * 1000, // 1 saat
+        sameSite: true,
+        secure: false // HTTPS kullanıyorsanız true yapın
+    }
+}));
 
 app.get('/', (req: express.Request, res: express.Response) => {
     res.sendFile(Path.join(__dirname, '/login.html'));
 })
 
 app.post('/login', async (req, res) => {
+    
     const { email, password } = req.body;
-    console.log("server ts login");
     try {
         const database = await getConnection();
         const [rows] = await database.query(
@@ -60,8 +76,11 @@ app.post('/login', async (req, res) => {
         );
         
         if (rows.length > 0) {
-            console.log("Login success");
-            res.sendStatus(200);
+            console.log(rows[0])
+            req.session.userId = rows[0].id;
+            console.log("User Id:",req.session.userId);
+            
+            res.status(200).send("Success"); // Örnek cevap gönderme
         } else {
             res.status(404).send("Email or password are incorrect.");
         }
@@ -70,6 +89,7 @@ app.post('/login', async (req, res) => {
         res.sendStatus(500);
     }
 });
+
 
 app.use("/ressources", express.static("public"));
 app.use("/ressources/bootstrap", express.static("public/node_modules/bootstrap/dist/css"));
@@ -91,9 +111,9 @@ async function getConnection(): Promise<any> {
     try {
         // Veritabanı bağlantısını oluşturma
         const connection = await mysql.createConnection({
-            user: 'samet.avcik@mnd.thm.de',
-            password: 'root',
-            database: 'savk77',
+            user: 'gizem.duygu.soenmez@mnd.thm.de',
+            password: 'KGVGO[R1CylZOP@F',
+            database: 'gdsn02',
             host: 'ip1-dbs.mni.thm.de',
             port: 3306
         });
@@ -115,7 +135,9 @@ function closeConnection(connection:any):any{
 }
 
 async function getUser(req: express.Request, res: express.Response) {
-    const id: string = req.params.id;
+
+    const id: string = req.session.userId;
+    console.log("getUser id:", id);
     const search: string = req.query.q?.toString();
     const output = [];
 
@@ -133,6 +155,7 @@ async function getUser(req: express.Request, res: express.Response) {
                     firstName: rows[0].firstname,
                     lastName: rows[0].lastname,
                 });
+                console.log("output:", output);
             } 
         }).catch(err => {
             console.log(err);
