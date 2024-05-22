@@ -34,96 +34,232 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var _this = this;
-var loginForm;
-var userEmail;
-var userPassword;
-document.addEventListener("DOMContentLoaded", function () {
-    loginForm = document.querySelector("#loginForm");
-    userEmail = document.querySelector("#userEmail");
-    userPassword = document.querySelector("#userPassword");
-    loginForm.addEventListener("submit", function (event) { return __awaiter(_this, void 0, void 0, function () {
-        var email, password;
-        return __generator(this, function (_a) {
-            event.preventDefault();
-            email = userEmail.value;
-            password = userPassword.value;
-            console.log("email", email);
-            console.log("password", password);
-            login(email, password);
-            return [2 /*return*/];
+var formEdit;
+var inputFName;
+var inputLName;
+var inputEmail;
+var inputPass;
+var inputEditFName;
+var inputEditLName;
+var inputEditEmail;
+var formAnimal;
+var tableAnimal;
+var tierName;
+var tierKind;
+var tableUser;
+document.addEventListener("DOMContentLoaded", function (e) {
+    e.preventDefault();
+    tableUser = document.querySelector("#tableUser");
+    formEdit = document.querySelector("#formEdit");
+    ;
+    inputEditFName = document.querySelector("#formEdit [name='firstname']");
+    inputEditLName = document.querySelector("#formEdit [name='lastname']");
+    inputEditEmail = document.querySelector("#formEdit [name='email']");
+    formAnimal = document.querySelector("#formAnimal");
+    tableAnimal = document.querySelector("#tableAnimal");
+    tierName = document.querySelector("#formAnimal [name='tierName'] ");
+    tierKind = document.querySelector("#formAnimal [name='tierKind'] ");
+    formEdit.addEventListener("submit", function (event) {
+        event.preventDefault();
+        editUser(event);
+        stopEdit();
+    });
+    tableUser.addEventListener("click", function (event) {
+        var target = event.target;
+        target = target.closest("button");
+        if (target.matches(".showAnimal")) {
+            showAnimal();
+        }
+        else if (target.matches(".addAnimal")) { // closing animals section
+            startAnimalAdd();
+        }
+        else if (target.matches(".edit")) {
+            startEdit();
+        }
+    });
+    renderUserList();
+    formAnimal.addEventListener("submit", function (event) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        event.preventDefault();
+                        return [4 /*yield*/, addAnimal()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, showAnimal()];
+                    case 2:
+                        _a.sent();
+                        return [4 /*yield*/, stopAnimalAdd()];
+                    case 3:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
         });
-    }); });
+    });
 });
-function login(email, password) {
+function renderUserList() {
     return __awaiter(this, void 0, void 0, function () {
-        var response, errorText, error_1;
+        var response, users;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 6, , 7]);
-                    return [4 /*yield*/, fetch('http://localhost:8080/login', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ email: email, password: password }),
-                            credentials: 'include' // Oturum bilgilerini istekle birlikte gönder
-                        })];
+                case 0: return [4 /*yield*/, fetch("http://localhost:8080/user", {
+                        credentials: "include"
+                    })];
                 case 1:
                     response = _a.sent();
                     if (!(response === null || response === void 0 ? void 0 : response.ok)) return [3 /*break*/, 3];
-                    console.log("Login successful");
-                    console.log(response);
-                    return [4 /*yield*/, fetchUserData()];
+                    return [4 /*yield*/, response.json()];
                 case 2:
-                    _a.sent();
-                    return [3 /*break*/, 5];
-                case 3: return [4 /*yield*/, response.text()];
-                case 4:
-                    errorText = _a.sent();
-                    console.error("Login failed:", errorText);
-                    _a.label = 5;
-                case 5: return [3 /*break*/, 7];
-                case 6:
-                    error_1 = _a.sent();
-                    console.error("An error occurred:", error_1);
-                    return [3 /*break*/, 7];
-                case 7: return [2 /*return*/];
+                    users = _a.sent();
+                    tableUser.innerHTML = "";
+                    users.forEach(function (user) {
+                        var tr = document.createElement("tr");
+                        tr.innerHTML = "\n            <td>".concat(user.email, "</td>\n            <td>").concat(user.lastName, "</td>\n            <td>").concat(user.firstName, "</td>\n            <td>\n              <button class=\"btn btn-primary edit\" data-email=\"").concat(user.email, "\"><i class=\"fas fa-pen\"></i></button>\n              <button class=\"btn btn-primary showAnimal\" data-email=\"").concat(user.email, "\"><i class=\"fas fa-paw\"></i></button>\n              <button class=\"btn btn-primary addAnimal\" data-email=\"").concat(user.email, "\"><i class=\"fa-solid fa-plus\"></i></button>\n            </td>");
+                        tableUser.appendChild(tr);
+                    });
+                    return [3 /*break*/, 4];
+                case 3:
+                    tableUser.innerHTML = "";
+                    console.log("Error: Response is not OK", response.statusText);
+                    _a.label = 4;
+                case 4: return [2 /*return*/];
             }
         });
     });
 }
-function fetchUserData() {
+function showAnimal() {
     return __awaiter(this, void 0, void 0, function () {
-        var response, userData, error_2;
+        var response, animals;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 5, , 6]);
-                    console.log("Fetch user");
-                    return [4 /*yield*/, fetch("http://localhost:8080/user", {
-                            credentials: "include" // Oturum bilgilerini istekle birlikte gönder
+                    console.log("show animal");
+                    return [4 /*yield*/, fetch("http://localhost:8080/user/pets", {
+                            method: 'GET', // HTTP methodunu GET olarak belirleyin
+                            credentials: 'include' // İstek ile birlikte kimlik bilgilerini dahil edin
                         })];
                 case 1:
                     response = _a.sent();
                     if (!(response === null || response === void 0 ? void 0 : response.ok)) return [3 /*break*/, 3];
                     return [4 /*yield*/, response.json()];
                 case 2:
-                    userData = _a.sent();
-                    console.log("User data:", userData);
+                    animals = _a.sent();
+                    tableAnimal.innerHTML = "";
+                    animals.forEach(function (animal) {
+                        var tr = document.createElement("tr");
+                        tr.innerHTML = "\n            <td>".concat(animal.name, "</td>\n            <td>").concat(animal.kind, "</td>\n            <td><button class=\"btn btn-primary edit\" data-animal-id=\"").concat(animal.id, "\"><i class=\"fas fa-trash\"></i></button></td>\n            <td></td>\n            ");
+                        tableAnimal.appendChild(tr);
+                    });
                     return [3 /*break*/, 4];
                 case 3:
-                    console.error("Failed to fetch user data");
+                    console.log("Error: Response is not OK", response.statusText);
                     _a.label = 4;
-                case 4: return [3 /*break*/, 6];
-                case 5:
-                    error_2 = _a.sent();
-                    console.error("An error occurred:", error_2);
-                    return [3 /*break*/, 6];
-                case 6: return [2 /*return*/];
+                case 4: return [2 /*return*/];
             }
         });
     });
 }
-// Başarılı girişten sonra getUser işlevini çağırın
+function startAnimalAdd() {
+    formAnimal.style.display = "block";
+}
+function addAnimal() {
+    return __awaiter(this, void 0, void 0, function () {
+        var Name, Kind, response;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    Name = tierName.value;
+                    Kind = tierKind.value;
+                    return [4 /*yield*/, fetch("http://localhost:8080/user/pets", {
+                            method: "POST",
+                            body: JSON.stringify({
+                                name: Name,
+                                kind: Kind,
+                            }),
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            credentials: "include"
+                        })];
+                case 1:
+                    response = _a.sent();
+                    if (response === null || response === void 0 ? void 0 : response.ok) {
+                    }
+                    else {
+                        console.log("Error: Response is not OK", response.statusText);
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function stopAnimalAdd() {
+    tierName.value = "";
+    tierKind.value = "";
+    formAnimal.style.display = "none";
+}
+function startEdit() {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, user;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, fetch("http://localhost:8080/user", {
+                        credentials: "include"
+                    })];
+                case 1:
+                    response = _a.sent();
+                    if (!response.ok) return [3 /*break*/, 3];
+                    console.log("response", response);
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    user = _a.sent();
+                    inputEditFName.value = user[0].firstName;
+                    inputEditLName.value = user[0].lastName;
+                    inputEditEmail.value = user[0].email;
+                    formEdit.style.display = "block";
+                    return [3 /*break*/, 4];
+                case 3:
+                    console.log("Error: Response is not OK", response.statusText);
+                    _a.label = 4;
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
+function stopEdit() {
+    formEdit.style.display = "none";
+}
+function editUser(event) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    event.preventDefault();
+                    return [4 /*yield*/, fetch("http://localhost:8080/user/edit-user", {
+                            method: "PATCH",
+                            body: JSON.stringify({
+                                firstName: inputEditFName.value,
+                                lastName: inputEditLName.value,
+                            }),
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            credentials: "include"
+                        })];
+                case 1:
+                    response = _a.sent();
+                    if (response.ok) {
+                        renderUserList();
+                    }
+                    else {
+                        console.log("Error: Response is not OK", response.statusText);
+                    }
+                    formEdit.style.display = "none";
+                    return [2 /*return*/];
+            }
+        });
+    });
+}

@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Webserver</title>
-    <link rel="stylesheet" href="/public/css/bootstrap.min.css">
+    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/public/css/style.css">
 </head>
 <body>
@@ -15,17 +16,18 @@
                      class="img-fluid" alt="Phone image">
             </div>
             <div class="col-md-7 col-lg-5 col-xl-5 offset-xl-1">
-                <form id="loginForm">
+                <form id="loginForm" action="http://localhost:8080/login" method="POST">
                     <!-- Email input -->
                     <div data-mdb-input-init class="form-outline mb-4">
-                        <input type="email" id="userEmail" class="form-control form-control-lg" />
-                        <label class="form-label" for="userEmail">Email address</label>
+                        <input type="email" name="email" id="email" class="form-control form-control-lg">
+                        <label class="form-label" for="email">Email address</label>
                     </div>
 
                     <!-- Password input -->
                     <div data-mdb-input-init class="form-outline mb-4">
-                        <input type="password" id="userPassword" class="form-control form-control-lg" />
-                        <label class="form-label" for="userPassword">Password</label>
+                        <input type="password" name="password" id="password" class="form-control form-control-lg" />
+
+                        <label class="form-label" for="password">Password</label>
                     </div>
 
                     <div class="d-flex justify-content-around align-items-center mb-4">
@@ -38,14 +40,45 @@
                     </div>
 
                     <!-- Submit button -->
-                    <button type="submit" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary btn-lg btn-block">Sign in</button>
+                    <button  type="submit" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary btn-lg btn-block">Sign In</button>
 
                 </form>
+
             </div>
         </div>
     </div>
 </section>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
 
-<script type="text/javascript" src="client/client.js" defer></script>
+/*$('#loginForm').on("submit", (e) => {
+   e.preventDefault();
+    console.log("submit");
+    window.location.href= "/main.html";
+});*/
+
+  /*  $('#loginForm').on("submit", (e) => {
+        e.preventDefault();
+        
+        // Form verilerini al
+        let email = $('#email');
+        let password = $('#password')
+        let formData = {email, password};
+        
+        // Sunucuya POST isteği gönder
+        $.post("http://localhost:8080/login", formData, function(data) {
+            // Sunucudan gelen yanıtı kontrol et
+            if (data.success) {
+                // Başarılı yanıt alındıysa yönlendir
+                window.location.href = "/main.html";
+            } else {
+                // Başarısız yanıt alındıysa kullanıcıyı bilgilendir
+                alert("Login failed. Please check your credentials.");
+            }
+        });
+    });*/
+
+</script>
+
 </body>
 </html>

@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Usermanager Client only</title>
-
-    <script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="/public/css/bootstrap.min.css">
-    <!--<link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css">-->
+    <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/public/css/style.css">
+    <link rel="stylesheet" href="node_modules/@fortawesome/fontawesome-free/css/all.css">
+    <script type="text/javascript" src="client/client.js" defer></script>
     
-    <link rel="stylesheet" href="/node_modules/@fortawesome/fontawesome-free/css/all.css">
     <style> 
         table{
             background-color: aliceblue;
@@ -41,96 +41,115 @@
     </style>
 </head>
 <body>
-<main>
-    <div class="container">
-        <div class="row">
-            <div class="col text-center">
-                <h1>Usermanager</h1>
-            </div>
-        </div>
-
-        <!--USER EDIT PANEL-->
-        <form class="row" id="formEdit" style="display: none">
-            <div class="col">
-                <div class="text-center">
-                    <h5>Nutzer bearbeiten</h5>
-                </div>
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Email</span>
-                    </div>
-                    <input class="form-control" name="email" aria-label="Email" disabled required>
-                </div>
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Vor- und Nachname</span>
-                    </div>
-                        <input type="text" placeholder="Vorname" class="form-control" name="firstname"
-                           aria-label="Vorname" required>
-                    <input type="text" placeholder="Nachname" class="form-control" name="lastname"
-                           aria-label="Nachname" required>
-                </div>
-                <div class="input-group mb-3">
-                    <button id="editClose" type="button" class="btn btn-secondary m-1">Schließen</button>
-                    <button type="submit" class="btn btn-info m-1">Speichern</button>
-                    
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col text-center">
+                    <h1>Usermanager</h1>
                 </div>
             </div>
-        </form>
-
-        <form class="row" id="formAnimal" style="display: none">
-            <div class="col">
-                <div class="text-center">
-                    <h5>Tier bearbeiten</h5>
-                </div>
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Email</span>
+    
+    
+            <!--USER EDIT PANEL-->
+            <form class="row" id="formEdit" style="display: none">
+                <div class="col">
+                    <div class="text-center">
+                        <h5>Nutzer bearbeiten</h5>
                     </div>
-                    <input class="form-control" name="userId" aria-label="userId" disabled required>
-                </div>
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Vor- und Nachname</span>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Email</span>
+                        </div>
+                        <input class="form-control" name="email" aria-label="Email" disabled required>
                     </div>
-                        <input type="text" placeholder="tierName" class="form-control" name="tierName"
-                           aria-label="Name" required>
-                    <input type="text" placeholder="tierKind" class="form-control" name="tierKind"
-                           aria-label="Kind" required>
-                </div>
-                <div class="input-group mb-3">
-                    <button id="editCloseAnimal" type="button" class="btn btn-secondary m-1">Schließen</button>
-                    <button type="submit" class="btn btn-info m-1">Speichern</button>
-                    
-                </div>
-            </div>
-        </form>
-
-
-        <div class="row">
-            <div class="col">
-                <div class="row">
-                    <div class="col text-center">
-                        <h5>Nutzerliste</h5>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Vor- und Nachname</span>
+                        </div>
+                            <input type="text" placeholder="Vorname" class="form-control" name="firstname"
+                               aria-label="Vorname" required>
+                        <input type="text" placeholder="Nachname" class="form-control" name="lastname"
+                               aria-label="Nachname" required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <button id="editClose" type="button" class="btn btn-secondary m-1">Schließen</button>
+                        <button type="submit" class="btn btn-info m-1">Speichern</button>
+                        
                     </div>
                 </div>
-                <table class="table table-striped">
-                    <thead class="thead-light">
-                    <tr>
-                        <th scope="col">Username</th>
-                        <th scope="col">Nachname</th>
-                        <th scope="col">Vorname</th>
-                        <th scope="col">Aktionen</th>
-                    </tr>
-                    </thead>
-                    <tbody id="tableUser">
-                    </tbody>
+            </form>
+    
+            <form class="row" id="formAnimal" style="display: none">
+                <div class="col">
+                    <div class="text-center">
+                        <h5>Tier bearbeiten</h5>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Email</span>
+                        </div>
+                        <input class="form-control" name="userId" aria-label="userId" disabled required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Vor- und Nachname</span>
+                        </div>
+                            <input type="text" placeholder="tierName" class="form-control" name="tierName"
+                               aria-label="Name" required>
+                        <input type="text" placeholder="tierKind" class="form-control" name="tierKind"
+                               aria-label="Kind" required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <button id="editCloseAnimal" type="button" class="btn btn-secondary m-1">Schließen</button>
+                        <button type="submit" class="btn btn-info m-1">Speichern</button>
+                        
+                    </div>
+                </div>
+            </form>
+    
+    
+            <div class="row">
+                <div class="col">
+                    <div class="row">
+                        <div class="col text-center">
+                            <h5>Nutzerliste</h5>
+                        </div>
+                    </div>
+                    <h3>User Info</h3>
+                    <table class="table table-striped">
+                        <thead class="thead-light">
+                        <tr>
+                            <th scope="col">Username</th>
+                            <th scope="col">Nachname</th>
+                            <th scope="col">Vorname</th>
+                            <th scope="col">Aktionen</th>
+                        </tr>
+                        </thead>
+
+                        <tbody class="tbl-accordion-header" id="tableUser"></tbody>
+                        
+                    </table>
+                    <br>
+                    <br>
+                    <h3>Animal Info</h3>
+                    <table class="table table-striped">
+                        <thead class="thead-light">
+                        <tr>
+                            <th scope="col">Username</th>
+                            <th scope="col">Nachname</th>
+                            <th scope="col">Aktionen</th>
+                            <th scope="col"></th>
+                        </tr>
+                        </thead>
+                        <tbody class="tbl-accordion-body" id="tableAnimal"></tbody>
                 </table>
+                </div>
             </div>
+    
+    
         </div>
-
-
-    </div>
+    </main>
 </main>
 </body>
+
 </html>

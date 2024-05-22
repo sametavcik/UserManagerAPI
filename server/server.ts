@@ -1,16 +1,31 @@
 import * as express from 'express';
 import * as Path from "path";
 import * as mysql from 'mysql2/promise';
-import { Session } from 'inspector';
+
 
 const cors = require('cors');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);  // MySQL için session store
+
 
 declare module 'express-session' {
     interface Session {
     userId: string; 
     }
   }
+
+// MySQL session store options
+const sessionStoreOptions = {
+    host: 'ip1-dbs.mni.thm.de',
+    port: 3306,
+    user: 'gizem.duygu.soenmez@mnd.thm.de',
+    password: 'KGVGO[R1CylZOP@F',
+    database: 'gdsn02'
+};
+const pool = mysql.createPool(sessionStoreOptions)
+const sessionStore = new MySQLStore(sessionStoreOptions,pool);
+
+
 
 class User {   // User Class
     id: string;
@@ -38,11 +53,12 @@ class Animal { // Animal Class
         this.kind = kind;
     }
 }
+const allowedOrigins = ['http://localhost:5500', 'http://127.0.0.1:5500'];
 
 const app: express.Express = express();
 app.use(cors({
-    origin: 'http://127.0.0.1:5500', 
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: allowedOrigins, 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
@@ -51,8 +67,9 @@ app.listen(8080);
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(session({
+    store: sessionStore,
     secret: 'your_secret_key', // Güvenli bir secret key kullanın
-    resave: false,
+    resave: false, 
     saveUninitialized: false,
     cookie: {
         maxAge: 60 * 60 * 1000, // 1 saat
@@ -66,7 +83,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
 })
 
 app.post('/login', async (req, res) => {
-    
+    console.log("login->>>>",req.sessionID);
     const { email, password } = req.body;
     try {
         const database = await getConnection();
@@ -76,11 +93,11 @@ app.post('/login', async (req, res) => {
         );
         
         if (rows.length > 0) {
-            console.log(rows[0])
             req.session.userId = rows[0].id;
             console.log("User Id:",req.session.userId);
-            
-            res.status(200).send("Success"); // Örnek cevap gönderme
+            req.session.save(() => {res.redirect('http://localhost:5500/main.html')});
+            //res.sendFile(Path.join(__dirname, '../main.html'));
+            //res.status(200).send("Success"); // Örnek cevap gönderme
         } else {
             res.status(404).send("Email or password are incorrect.");
         }
@@ -94,15 +111,16 @@ app.post('/login', async (req, res) => {
 app.use("/ressources", express.static("public"));
 app.use("/ressources/bootstrap", express.static("public/node_modules/bootstrap/dist/css"));
 
+app.get("/user/pets", getAnimals);
+app.post("/user/pets", postAnimal);
+app.patch("/user/edit-user", patchUser);
 app.get("/user/:id", getUser);
 app.get("/user", getUser);
 app.post("/user", postUser);
-app.patch("/user/:id", patchUser);
+
 app.delete("/user/:id", deleteUser);
 
-app.get("/user/:id/pets", getAnimals);
 app.get("/user/:id/pets/:animalid", getAnimals);
-app.post("/user/:id/pets", postAnimal);
 app.delete("/user/:id/pets/:animalid", deleteAnimal);
 
 app.use(notFound);
@@ -135,9 +153,9 @@ function closeConnection(connection:any):any{
 }
 
 async function getUser(req: express.Request, res: express.Response) {
-
+    console.log("user- >>>",req.sessionID);
     const id: string = req.session.userId;
-    console.log("getUser id:", id);
+    console.log("id---->", id);
     const search: string = req.query.q?.toString();
     const output = [];
 
@@ -155,7 +173,6 @@ async function getUser(req: express.Request, res: express.Response) {
                     firstName: rows[0].firstname,
                     lastName: rows[0].lastname,
                 });
-                console.log("output:", output);
             } 
         }).catch(err => {
             console.log(err);
@@ -387,7 +404,8 @@ async function checkValues(email:string,fName:string,lName:string,password:strin
 }
 
 async function patchUser(req: express.Request, res: express.Response) {
-    const id: string = req.params.id;
+    const id: string = req.session.userId;
+
     const email: string = req.body.email;
     const fName: string = req.body.firstName;
     const lName: string = req.body.lastName;
@@ -455,98 +473,36 @@ async function patchUser(req: express.Request, res: express.Response) {
 }
 
 async function getAnimals(req: express.Request, res: express.Response) {
-    const owner_id: string = req.params.id;
-    const animal_id: string = req.params.animalid;
-    const search: string = req.query.q?.toString();
-
+    const owner_id: string = req.session.userId;
     const output = [];
-    let userFound = false;
     const database = await getConnection();
-
-    if (owner_id !== undefined) {
-        const checkUser =  await database.query("SELECT COUNT(*) FROM User WHERE id = ?", [owner_id]).then(checkUser => {
-            const rows: mysql.RowDataPacket[] = checkUser[0];
-            if (parseInt(rows[0]['COUNT(*)'])  > 0) {
-                userFound = true
-            }
-            else{ 
-                userFound= false
-            }
-        }).catch(err => {
-            console.log(err);
-            res.sendStatus(500);
-        });
-
-        if(userFound){
-            const result = await database.query("SELECT id, name, kind, owner_id FROM Animal WHERE owner_id = ?", [owner_id]).then(result => {
-                const rows: mysql.RowDataPacket[] = result[0];
-
-                if (rows.length > 0) {
-                    rows.forEach((animal) => {
-                        output.push({
-                            id: animal.id,
-                            name: animal.name,
-                            kind: animal.kind,
-                            owner_id: animal.owner_id,
-                        });
-                    });
-                }
-            }).catch(err => {
-                console.log(err);
-                res.sendStatus(500);
+       
+    const result = await database.query("SELECT id, name, kind, owner_id FROM Animal WHERE owner_id = ?", [owner_id]).then(result => {
+        const rows: mysql.RowDataPacket[] = result[0];
+        console.log("rows:",rows);
+        if (rows.length > 0) {
+            rows.forEach((animal) => {
+                output.push({
+                    id: animal.id,
+                    name: animal.name,
+                    kind: animal.kind,
+                    owner_id: animal.owner_id,
+                });
             });
-        }
-       
 
-    } else if (search !== undefined) {
-        const result = await database.query(
-            "SELECT id, name, kind, owner_id FROM Animal WHERE id LIKE ? OR name LIKE ? OR kind LIKE ? OR owner_id LIKE ?",
-            [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`]
-        ).then(result => {
-            const rows: mysql.RowDataPacket[] = result[0];
-            if (rows.length > 0) {
-                rows.forEach((user) => {
-                    output.push({
-                        id: user.id,
-                        firstName: user.firstname,
-                        lastName: user.lastname,
-                    });
-                });
-            }
-        }).catch(err => {
-            console.log(err);
-            res.sendStatus(500);
-        });
-    } else {
-        const result = await database.query("SELECT id, name, kind, owner_id FROM Animal").then(result => {
-            const rows: mysql.RowDataPacket[] = result[0];
-            if (rows.length > 0) {
-                rows.forEach((user) => {
-                    output.push({
-                        id: user.id,
-                        name: user.name,
-                        kind: user.kind,
-                    });
-                });
-            }
-        }).catch(err => {
-            console.log(err);
-            res.sendStatus(500);
-        });
-    }
+        }
+    }).catch(err => {
+        console.log(err);
+        res.sendStatus(500);
+    });
+   
     if (output.length > 0) {
-        if(owner_id === undefined || userFound){
-            res.status(200);
-            res.contentType("application/json");
-            res.json(output);
-        }
+        res.status(200);
+        res.contentType("application/json");
+        res.json(output);
     } else {
-        if (!userFound) {
-            notFound(req, res);
-        }else{
-            animalNotFound(req, res);
-        }
-       
+        animalNotFound(req, res);
+      
     }
 }
 
@@ -604,7 +560,7 @@ async function checkAnimalFields(errors:any,name:string,output:any,kind:string,o
 
 }
 async function postAnimal(req: express.Request, res: express.Response){
-    const owner_id: string = req.params.id;
+    const owner_id: string = req.session.userId;
     const name: string = req.body.name;
     const kind: string = req.body.kind;
     let output = [];

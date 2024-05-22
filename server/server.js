@@ -50,6 +50,17 @@ var Path = require("path");
 var mysql = require("mysql2/promise");
 var cors = require('cors');
 var session = require('express-session');
+var MySQLStore = require('express-mysql-session')(session); // MySQL için session store
+// MySQL session store options
+var sessionStoreOptions = {
+    host: 'ip1-dbs.mni.thm.de',
+    port: 3306,
+    user: 'gizem.duygu.soenmez@mnd.thm.de',
+    password: 'KGVGO[R1CylZOP@F',
+    database: 'gdsn02'
+};
+var pool = mysql.createPool(sessionStoreOptions);
+var sessionStore = new MySQLStore(sessionStoreOptions, pool);
 var User = /** @class */ (function () {
     function User(id, fName, lName, email, password) {
         this.id = id;
@@ -67,10 +78,11 @@ var Animal = /** @class */ (function () {
     }
     return Animal;
 }());
+var allowedOrigins = ['http://localhost:5500', 'http://127.0.0.1:5500'];
 var app = express();
 app.use(cors({
-    origin: 'http://127.0.0.1:5500',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
@@ -78,6 +90,7 @@ app.listen(8080);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(session({
+    store: sessionStore,
     secret: 'your_secret_key', // Güvenli bir secret key kullanın
     resave: false,
     saveUninitialized: false,
@@ -95,6 +108,7 @@ app.post('/login', function (req, res) { return __awaiter(void 0, void 0, void 0
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
+                console.log("login->>>>", req.sessionID);
                 _a = req.body, email = _a.email, password = _a.password;
                 _b.label = 1;
             case 1:
@@ -106,11 +120,11 @@ app.post('/login', function (req, res) { return __awaiter(void 0, void 0, void 0
             case 3:
                 rows = (_b.sent())[0];
                 if (rows.length > 0) {
-                    console.log(rows[0]);
                     req.session.userId = rows[0].id;
                     console.log("User Id:", req.session.userId);
-                    console.log(req.session.sessionID); // Oturum kimliğini çerez olarak gönderme
-                    res.status(200).send("Success"); // Örnek cevap gönderme
+                    req.session.save(function () { res.redirect('http://localhost:5500/main.html'); });
+                    //res.sendFile(Path.join(__dirname, '../main.html'));
+                    //res.status(200).send("Success"); // Örnek cevap gönderme
                 }
                 else {
                     res.status(404).send("Email or password are incorrect.");
@@ -127,14 +141,14 @@ app.post('/login', function (req, res) { return __awaiter(void 0, void 0, void 0
 }); });
 app.use("/ressources", express.static("public"));
 app.use("/ressources/bootstrap", express.static("public/node_modules/bootstrap/dist/css"));
+app.get("/user/pets", getAnimals);
+app.post("/user/pets", postAnimal);
+app.patch("/user/edit-user", patchUser);
 app.get("/user/:id", getUser);
 app.get("/user", getUser);
 app.post("/user", postUser);
-app.patch("/user/:id", patchUser);
 app.delete("/user/:id", deleteUser);
-app.get("/user/:id/pets", getAnimals);
 app.get("/user/:id/pets/:animalid", getAnimals);
-app.post("/user/:id/pets", postAnimal);
 app.delete("/user/:id/pets/:animalid", deleteAnimal);
 app.use(notFound);
 function getConnection() {
@@ -182,9 +196,9 @@ function getUser(req, res) {
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    console.log(req.session.sessionID); // Oturum kimliğini çerez olarak gönderme
+                    console.log("user- >>>", req.sessionID);
                     id = req.session.userId;
-                    console.log("getUser id:", id);
+                    console.log("id---->", id);
                     search = (_a = req.query.q) === null || _a === void 0 ? void 0 : _a.toString();
                     output = [];
                     userFound = false;
@@ -203,7 +217,6 @@ function getUser(req, res) {
                                     firstName: rows[0].firstname,
                                     lastName: rows[0].lastname,
                                 });
-                                console.log("output:", output);
                             }
                         }).catch(function (err) {
                             console.log(err);
@@ -474,7 +487,7 @@ function patchUser(req, res) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    id = req.params.id;
+                    id = req.session.userId;
                     email = req.body.email;
                     fName = req.body.firstName;
                     lName = req.body.lastName;
@@ -541,37 +554,18 @@ function patchUser(req, res) {
 }
 function getAnimals(req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var owner_id, animal_id, search, output, userFound, database, checkUser, result, result, result;
-        var _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var owner_id, output, database, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
-                    owner_id = req.params.id;
-                    animal_id = req.params.animalid;
-                    search = (_a = req.query.q) === null || _a === void 0 ? void 0 : _a.toString();
+                    owner_id = req.session.userId;
                     output = [];
-                    userFound = false;
                     return [4 /*yield*/, getConnection()];
                 case 1:
-                    database = _b.sent();
-                    if (!(owner_id !== undefined)) return [3 /*break*/, 5];
-                    return [4 /*yield*/, database.query("SELECT COUNT(*) FROM User WHERE id = ?", [owner_id]).then(function (checkUser) {
-                            var rows = checkUser[0];
-                            if (parseInt(rows[0]['COUNT(*)']) > 0) {
-                                userFound = true;
-                            }
-                            else {
-                                userFound = false;
-                            }
-                        }).catch(function (err) {
-                            console.log(err);
-                            res.sendStatus(500);
-                        })];
-                case 2:
-                    checkUser = _b.sent();
-                    if (!userFound) return [3 /*break*/, 4];
+                    database = _a.sent();
                     return [4 /*yield*/, database.query("SELECT id, name, kind, owner_id FROM Animal WHERE owner_id = ?", [owner_id]).then(function (result) {
                             var rows = result[0];
+                            console.log("rows:", rows);
                             if (rows.length > 0) {
                                 rows.forEach(function (animal) {
                                     output.push({
@@ -586,63 +580,15 @@ function getAnimals(req, res) {
                             console.log(err);
                             res.sendStatus(500);
                         })];
-                case 3:
-                    result = _b.sent();
-                    _b.label = 4;
-                case 4: return [3 /*break*/, 9];
-                case 5:
-                    if (!(search !== undefined)) return [3 /*break*/, 7];
-                    return [4 /*yield*/, database.query("SELECT id, name, kind, owner_id FROM Animal WHERE id LIKE ? OR name LIKE ? OR kind LIKE ? OR owner_id LIKE ?", ["%".concat(search, "%"), "%".concat(search, "%"), "%".concat(search, "%"), "%".concat(search, "%")]).then(function (result) {
-                            var rows = result[0];
-                            if (rows.length > 0) {
-                                rows.forEach(function (user) {
-                                    output.push({
-                                        id: user.id,
-                                        firstName: user.firstname,
-                                        lastName: user.lastname,
-                                    });
-                                });
-                            }
-                        }).catch(function (err) {
-                            console.log(err);
-                            res.sendStatus(500);
-                        })];
-                case 6:
-                    result = _b.sent();
-                    return [3 /*break*/, 9];
-                case 7: return [4 /*yield*/, database.query("SELECT id, name, kind, owner_id FROM Animal").then(function (result) {
-                        var rows = result[0];
-                        if (rows.length > 0) {
-                            rows.forEach(function (user) {
-                                output.push({
-                                    id: user.id,
-                                    name: user.name,
-                                    kind: user.kind,
-                                });
-                            });
-                        }
-                    }).catch(function (err) {
-                        console.log(err);
-                        res.sendStatus(500);
-                    })];
-                case 8:
-                    result = _b.sent();
-                    _b.label = 9;
-                case 9:
+                case 2:
+                    result = _a.sent();
                     if (output.length > 0) {
-                        if (owner_id === undefined || userFound) {
-                            res.status(200);
-                            res.contentType("application/json");
-                            res.json(output);
-                        }
+                        res.status(200);
+                        res.contentType("application/json");
+                        res.json(output);
                     }
                     else {
-                        if (!userFound) {
-                            notFound(req, res);
-                        }
-                        else {
-                            animalNotFound(req, res);
-                        }
+                        animalNotFound(req, res);
                     }
                     return [2 /*return*/];
             }
@@ -711,7 +657,7 @@ function postAnimal(req, res) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    owner_id = req.params.id;
+                    owner_id = req.session.userId;
                     name = req.body.name;
                     kind = req.body.kind;
                     output = [];
