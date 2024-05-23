@@ -104,43 +104,72 @@ app.get('/', function (req, res) {
     res.sendFile(Path.join(__dirname, '/login.html'));
 });
 app.post('/login', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, email, password, database, rows, err_1;
+    var _a, email, password, database, response, output, errors, checkEmail, err, err_1;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                console.log("login->>>>", req.sessionID);
+                console.log("login----->", req.session.userId);
                 _a = req.body, email = _a.email, password = _a.password;
                 _b.label = 1;
             case 1:
-                _b.trys.push([1, 4, , 5]);
+                _b.trys.push([1, 7, , 8]);
                 return [4 /*yield*/, getConnection()];
             case 2:
                 database = _b.sent();
                 return [4 /*yield*/, database.query("SELECT * FROM User WHERE email=? AND password=?", [email, password])];
             case 3:
-                rows = (_b.sent())[0];
-                if (rows.length > 0) {
-                    req.session.userId = rows[0].id;
-                    console.log("User Id:", req.session.userId);
-                    req.session.save(function () { res.redirect('http://localhost:5500/main.html'); });
-                    //res.sendFile(Path.join(__dirname, '../main.html'));
-                    //res.status(200).send("Success"); // Örnek cevap gönderme
+                response = (_b.sent())[0];
+                if (!(response.length > 0)) return [3 /*break*/, 4];
+                req.session.userId = response[0].id;
+                console.log("User Id:", req.session.userId);
+                req.session.save();
+                res.status(200);
+                res.contentType("application/json");
+                res.json("");
+                return [3 /*break*/, 6];
+            case 4:
+                output = [];
+                errors = {};
+                return [4 /*yield*/, database.query("SELECT * FROM User WHERE email=?", [email])];
+            case 5:
+                checkEmail = (_b.sent())[0];
+                if (checkEmail.length === 0) {
+                    errors['email'] = ['Email is not found!'];
                 }
                 else {
-                    res.status(404).send("Email or password are incorrect.");
+                    errors['password'] = ['Password is not correct!'];
                 }
-                return [3 /*break*/, 5];
-            case 4:
+                err = { errors: errors };
+                if (Object.keys(errors).length > 0) {
+                    output.push(err);
+                }
+                res.status(404);
+                res.contentType("application/json");
+                res.json(output);
+                _b.label = 6;
+            case 6: return [3 /*break*/, 8];
+            case 7:
                 err_1 = _b.sent();
                 console.error(err_1);
                 res.sendStatus(500);
-                return [3 /*break*/, 5];
-            case 5: return [2 /*return*/];
+                return [3 /*break*/, 8];
+            case 8: return [2 /*return*/];
         }
     });
 }); });
+app.post('/logout', function (req, res) {
+    req.session.destroy(function (err) {
+        if (err) {
+            return res.status(500).send('Failed to destroy session');
+        }
+        res.clearCookie("connect.sid");
+        res.status(200).send('Session destroyed');
+    });
+});
 app.use("/ressources", express.static("public"));
 app.use("/ressources/bootstrap", express.static("public/node_modules/bootstrap/dist/css"));
+app.get("/user", checkLogin, getUser);
+app.delete("/user/pets/delete-pets", deleteAnimal);
 app.get("/user/pets", getAnimals);
 app.post("/user/pets", postAnimal);
 app.patch("/user/edit-user", patchUser);
@@ -149,7 +178,6 @@ app.get("/user", getUser);
 app.post("/user", postUser);
 app.delete("/user/:id", deleteUser);
 app.get("/user/:id/pets/:animalid", getAnimals);
-app.delete("/user/:id/pets/:animalid", deleteAnimal);
 app.use(notFound);
 function getConnection() {
     return __awaiter(this, void 0, void 0, function () {
@@ -187,6 +215,15 @@ function closeConnection(connection) {
                 console.log('Bağlantı başarıyla kapatıldı.');
             }
         });
+    }
+}
+function checkLogin(req, res, next) {
+    console.log("check login...");
+    if (req.session.userId !== undefined) {
+        next();
+    }
+    else {
+        res.sendStatus(401);
     }
 }
 function getUser(req, res) {
@@ -703,7 +740,7 @@ function deleteAnimal(req, res) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    animal_id = req.params.id;
+                    animal_id = req.body.petID;
                     console.log("animal_id:", animal_id);
                     output = [];
                     return [4 /*yield*/, getConnection()];

@@ -47,6 +47,7 @@ var tableAnimal;
 var tierName;
 var tierKind;
 var tableUser;
+var logoutButton;
 document.addEventListener("DOMContentLoaded", function (e) {
     e.preventDefault();
     tableUser = document.querySelector("#tableUser");
@@ -59,10 +60,37 @@ document.addEventListener("DOMContentLoaded", function (e) {
     tableAnimal = document.querySelector("#tableAnimal");
     tierName = document.querySelector("#formAnimal [name='tierName'] ");
     tierKind = document.querySelector("#formAnimal [name='tierKind'] ");
+    logoutButton = document.querySelector("[data-mission='logout']");
     formEdit.addEventListener("submit", function (event) {
         event.preventDefault();
         editUser(event);
         stopEdit();
+    });
+    logoutButton.addEventListener("click", function (event) {
+        return __awaiter(this, void 0, void 0, function () {
+            var response;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!confirm('Are you sure you want to logout?')) return [3 /*break*/, 2];
+                        return [4 /*yield*/, fetch("http://localhost:8080/logout", {
+                                method: "POST",
+                                credentials: "include"
+                            })];
+                    case 1:
+                        response = _a.sent();
+                        if (response === null || response === void 0 ? void 0 : response.ok) {
+                            window.location.href = "/login.html";
+                        }
+                        else {
+                            tableUser.innerHTML = "";
+                            console.log("Error: Response is not OK", response.statusText);
+                        }
+                        _a.label = 2;
+                    case 2: return [2 /*return*/];
+                }
+            });
+        });
     });
     tableUser.addEventListener("click", function (event) {
         var target = event.target;
@@ -75,6 +103,13 @@ document.addEventListener("DOMContentLoaded", function (e) {
         }
         else if (target.matches(".edit")) {
             startEdit();
+        }
+    });
+    tableAnimal.addEventListener("click", function (event) {
+        var target = event.target;
+        target = target.closest("button");
+        if (target.matches(".deleteAnimal")) {
+            deleteAnimal(target.getAttribute("data-animal-id").toString());
         }
     });
     renderUserList();
@@ -131,32 +166,36 @@ function renderUserList() {
 }
 function showAnimal() {
     return __awaiter(this, void 0, void 0, function () {
-        var response, animals;
+        var response, output, errorText_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
-                    console.log("show animal");
-                    return [4 /*yield*/, fetch("http://localhost:8080/user/pets", {
-                            method: 'GET', // HTTP methodunu GET olarak belirleyin
-                            credentials: 'include' // İstek ile birlikte kimlik bilgilerini dahil edin
-                        })];
+                case 0: return [4 /*yield*/, fetch("http://localhost:8080/user/pets", {
+                        method: 'GET', // HTTP methodunu GET olarak belirleyin
+                        credentials: 'include' // İstek ile birlikte kimlik bilgilerini dahil edin
+                    })];
                 case 1:
                     response = _a.sent();
-                    if (!(response === null || response === void 0 ? void 0 : response.ok)) return [3 /*break*/, 3];
                     return [4 /*yield*/, response.json()];
                 case 2:
-                    animals = _a.sent();
-                    tableAnimal.innerHTML = "";
-                    animals.forEach(function (animal) {
-                        var tr = document.createElement("tr");
-                        tr.innerHTML = "\n            <td>".concat(animal.name, "</td>\n            <td>").concat(animal.kind, "</td>\n            <td><button class=\"btn btn-primary edit\" data-animal-id=\"").concat(animal.id, "\"><i class=\"fas fa-trash\"></i></button></td>\n            <td></td>\n            ");
-                        tableAnimal.appendChild(tr);
-                    });
-                    return [3 /*break*/, 4];
-                case 3:
-                    console.log("Error: Response is not OK", response.statusText);
-                    _a.label = 4;
-                case 4: return [2 /*return*/];
+                    output = _a.sent();
+                    if (response === null || response === void 0 ? void 0 : response.ok) {
+                        tableAnimal.innerHTML = "";
+                        output.forEach(function (animal) {
+                            var tr = document.createElement("tr");
+                            tr.innerHTML = "\n            <td>".concat(animal.name, "</td>\n            <td>").concat(animal.kind, "</td>\n            <td><button class=\"btn btn-primary deleteAnimal\" data-animal-id=\"").concat(animal.id, "\" data-target=\"deleteAnimal\"><i class=\"fas fa-trash\"></i></button></td>\n            <td></td>\n            ");
+                            tableAnimal.appendChild(tr);
+                        });
+                    }
+                    else {
+                        errorText_1 = "";
+                        Object.entries(output[0].errors).forEach(function (_a) {
+                            var key = _a[0], errors = _a[1];
+                            errorText_1 += "".concat(errors[0], "\n");
+                        });
+                        alert(errorText_1);
+                        console.log("Error: Response is not OK", response.statusText);
+                    }
+                    return [2 /*return*/];
             }
         });
     });
@@ -166,7 +205,7 @@ function startAnimalAdd() {
 }
 function addAnimal() {
     return __awaiter(this, void 0, void 0, function () {
-        var Name, Kind, response;
+        var Name, Kind, response, output, errorText_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -185,9 +224,19 @@ function addAnimal() {
                         })];
                 case 1:
                     response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    output = _a.sent();
                     if (response === null || response === void 0 ? void 0 : response.ok) {
+                        alert("Added pet successfully");
                     }
                     else {
+                        errorText_2 = "";
+                        Object.entries(output[0].errors).forEach(function (_a) {
+                            var key = _a[0], errors = _a[1];
+                            errorText_2 += "".concat(errors[0], "\n");
+                        });
+                        alert(errorText_2);
                         console.log("Error: Response is not OK", response.statusText);
                     }
                     return [2 /*return*/];
@@ -258,6 +307,37 @@ function editUser(event) {
                         console.log("Error: Response is not OK", response.statusText);
                     }
                     formEdit.style.display = "none";
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function deleteAnimal(petID) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, fetch("http://localhost:8080/user/pets/delete-pets", {
+                        method: "DELETE",
+                        body: JSON.stringify({
+                            petID: petID,
+                        }),
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        credentials: "include"
+                    })];
+                case 1:
+                    response = _a.sent();
+                    if (response.ok) {
+                        // Burada render veya başka bir işlem yapılır
+                        console.log("Animal deleted successfully");
+                        alert("Animal deleted successfully");
+                        showAnimal();
+                    }
+                    else {
+                        console.log("Error: Unable to delete user", response.statusText);
+                    }
                     return [2 /*return*/];
             }
         });

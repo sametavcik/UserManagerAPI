@@ -12,7 +12,7 @@ let tableAnimal: HTMLInputElement;
 let tierName: HTMLInputElement;
 let tierKind: HTMLInputElement;
 let tableUser: HTMLElement;
-
+let logoutButton: HTMLElement;
 
 document.addEventListener("DOMContentLoaded", (e) => { 
     e.preventDefault();
@@ -25,11 +25,27 @@ document.addEventListener("DOMContentLoaded", (e) => {
     tableAnimal = document.querySelector("#tableAnimal");
     tierName = document.querySelector("#formAnimal [name='tierName'] ")
     tierKind = document.querySelector("#formAnimal [name='tierKind'] ")
+    logoutButton = document.querySelector("[data-mission='logout']")
 
     formEdit.addEventListener("submit", function(event) { // when we click edit user button we find id of user with using its email then edit user
         event.preventDefault();
         editUser(event);   
         stopEdit(); 
+    });
+
+    logoutButton.addEventListener("click",  async function(event) {   // adding  eventlisteners to tableuser
+        if (confirm('Are you sure you want to logout?')) {
+                const response: Response = await fetch("http://localhost:8080/logout", {
+                method: "POST",
+                credentials: "include"
+            });
+            if (response?.ok) {
+                window.location.href ="/login.html";
+            } else {
+                tableUser.innerHTML = ""
+                console.log("Error: Response is not OK", response.statusText);
+            }
+        }
     });
 
     tableUser.addEventListener("click", (event: Event) => {   // adding  eventlisteners to tableuser
@@ -45,6 +61,16 @@ document.addEventListener("DOMContentLoaded", (e) => {
                 startEdit();
         }
     });
+
+    tableAnimal.addEventListener("click", (event: Event) => {   // adding  eventlisteners to tableuser
+        
+        let target: HTMLElement = event.target as HTMLElement;
+        target = target.closest("button");
+        
+        if (target.matches(".deleteAnimal")) { 
+            deleteAnimal(target.getAttribute("data-animal-id").toString());
+        }
+    });
    
     renderUserList();
 
@@ -55,7 +81,10 @@ document.addEventListener("DOMContentLoaded", (e) => {
         await stopAnimalAdd();
     });
 
+    
+
 });
+
 
 async function renderUserList() {   // show all users on screen
     const response: Response = await fetch("http://localhost:8080/user", {
@@ -85,26 +114,31 @@ async function renderUserList() {   // show all users on screen
 }
 
 async function showAnimal() {  // Get animals of User
-    console.log("show animal");
     const response: Response = await fetch(`http://localhost:8080/user/pets`, {
     method: 'GET',          // HTTP methodunu GET olarak belirleyin
     credentials: 'include'  // İstek ile birlikte kimlik bilgilerini dahil edin
     });
+    let output = await response.json();
+
     if (response?.ok) {
-        let animals = await response.json();
         tableAnimal.innerHTML = "";
 
-        animals.forEach(animal => {
+        output.forEach(animal => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
             <td>${animal.name}</td>
             <td>${animal.kind}</td>
-            <td><button class="btn btn-primary edit" data-animal-id="${animal.id}"><i class="fas fa-trash"></i></button></td>
+            <td><button class="btn btn-primary deleteAnimal" data-animal-id="${animal.id}" data-target="deleteAnimal"><i class="fas fa-trash"></i></button></td>
             <td></td>
             `;
             tableAnimal.appendChild(tr);
         });
     } else {
+        let errorText = ""
+        Object.entries(output[0].errors).forEach(([key, errors]) => {
+            errorText += `${errors[0]}\n`;
+        });
+        alert(errorText);
         console.log("Error: Response is not OK", response.statusText);
     }
 }
@@ -128,13 +162,20 @@ async function addAnimal() {    // post animal to user's animal
         },
         credentials: "include"
     });
+    const output = await response.json();
     if (response?.ok) {
-       
+        alert("Added pet successfully");
     } else {
+        let errorText = ""
+        Object.entries(output[0].errors).forEach(([key, errors]) => {
+            errorText += `${errors[0]}\n`;
+        });
+        alert(errorText);
         console.log("Error: Response is not OK", response.statusText);
     }
 
 }
+
 function stopAnimalAdd() {   // close animal section
     tierName.value = ""
     tierKind.value = ""
@@ -180,4 +221,26 @@ async function editUser(event: Event) {  // submit user edit button
         console.log("Error: Response is not OK", response.statusText);
     }
     formEdit.style.display = "none";
+}
+
+async function deleteAnimal(petID) { 
+    const response: Response = await fetch(`http://localhost:8080/user/pets/delete-pets`, {
+    method: "DELETE",
+    body: JSON.stringify({
+        petID: petID,
+    }),
+    headers: {
+        "Content-Type": "application/json"
+    },
+    credentials: "include"
+    });
+
+    if (response.ok) {
+        // Burada render veya başka bir işlem yapılır
+        console.log("Animal deleted successfully");
+        alert("Animal deleted successfully");
+        showAnimal();
+    } else {
+        console.log("Error: Unable to delete user", response.statusText);
+    }
 }

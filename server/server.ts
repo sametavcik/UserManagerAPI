@@ -83,34 +83,63 @@ app.get('/', (req: express.Request, res: express.Response) => {
 })
 
 app.post('/login', async (req, res) => {
-    console.log("login->>>>",req.sessionID);
+    console.log("login----->",req.session.userId);
     const { email, password } = req.body;
     try {
         const database = await getConnection();
-        const [rows] = await database.query(
+        const [response] = await database.query(
             "SELECT * FROM User WHERE email=? AND password=?", 
             [email, password]
         );
-        
-        if (rows.length > 0) {
-            req.session.userId = rows[0].id;
+
+        if (response.length > 0) {
+            req.session.userId = response[0].id;
             console.log("User Id:",req.session.userId);
-            req.session.save(() => {res.redirect('http://localhost:5500/main.html')});
-            //res.sendFile(Path.join(__dirname, '../main.html'));
-            //res.status(200).send("Success"); // Örnek cevap gönderme
+            req.session.save();
+            res.status(200);
+            res.contentType("application/json");
+            res.json("");
+            //req.session.save(() => {res.redirect('http://localhost:5500/main.html')});
         } else {
-            res.status(404).send("Email or password are incorrect.");
+            const output = [];
+            let errors: { [key: string]: string[] } = {};
+            const [checkEmail] = await database.query(
+                "SELECT * FROM User WHERE email=?", 
+                [email]);
+                
+            if(checkEmail.length === 0){ 
+                errors['email'] = ['Email is not found!'];
+            }else{
+                errors['password'] = ['Password is not correct!'];
+            }
+            const err = { errors };
+            if(Object.keys(errors).length > 0){
+                output.push(err)
+            }
+            res.status(404);
+            res.contentType("application/json");
+            res.json(output);            
         }
     } catch (err) {
         console.error(err);
         res.sendStatus(500);
     }
 });
-
+app.post('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).send('Failed to destroy session');
+        }
+        res.clearCookie("connect.sid");
+        res.status(200).send('Session destroyed');
+    });
+});
 
 app.use("/ressources", express.static("public"));
 app.use("/ressources/bootstrap", express.static("public/node_modules/bootstrap/dist/css"));
 
+app.get("/user", checkLogin, getUser);
+app.delete("/user/pets/delete-pets", deleteAnimal);
 app.get("/user/pets", getAnimals);
 app.post("/user/pets", postAnimal);
 app.patch("/user/edit-user", patchUser);
@@ -121,7 +150,6 @@ app.post("/user", postUser);
 app.delete("/user/:id", deleteUser);
 
 app.get("/user/:id/pets/:animalid", getAnimals);
-app.delete("/user/:id/pets/:animalid", deleteAnimal);
 
 app.use(notFound);
 
@@ -149,6 +177,15 @@ function closeConnection(connection:any):any{
                 console.log('Bağlantı başarıyla kapatıldı.');
             }
         });
+    }
+}
+
+function checkLogin(req: express.Request, res: express.Response, next:express.NextFunction):void{
+    console.log("check login...");
+    if(req.session.userId !== undefined){
+        next();
+    }else{
+        res.sendStatus(401);
     }
 }
 
@@ -594,7 +631,7 @@ async function postAnimal(req: express.Request, res: express.Response){
     res.json(output);
 }
 async function deleteAnimal(req: express.Request, res: express.Response){
-    const animal_id: string = req.params.id;
+    const animal_id: string = req.body.petID;
     console.log("animal_id:", animal_id);
     const output = [];
     const database = await getConnection();
@@ -630,4 +667,6 @@ function animalNotFound(req: express.Request, res: express.Response): void {
     output.push(err)
     res.json(output);
 }
+
+
 
