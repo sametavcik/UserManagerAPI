@@ -123,9 +123,10 @@ app.post('/login', function (req, res) { return __awaiter(void 0, void 0, void 0
                 req.session.userId = response[0].id;
                 console.log("User Id:", req.session.userId);
                 req.session.save();
-                res.status(200);
-                res.contentType("application/json");
-                res.json("");
+                //res.status(200);
+                //res.contentType("application/json");
+                //res.json("");
+                req.session.save(function () { res.redirect('http://localhost:5500/main.html'); });
                 return [3 /*break*/, 6];
             case 4:
                 output = [];
@@ -162,6 +163,7 @@ app.post('/logout', function (req, res) {
         if (err) {
             return res.status(500).send('Failed to destroy session');
         }
+        deleteCookie(req, res);
         res.clearCookie("connect.sid");
         res.status(200).send('Session destroyed');
     });
@@ -172,11 +174,11 @@ app.get("/user", checkLogin, getUser);
 app.delete("/user/pets/delete-pets", deleteAnimal);
 app.get("/user/pets", getAnimals);
 app.post("/user/pets", postAnimal);
-app.patch("/user/edit-user", patchUser);
+app.patch("/user", patchUser);
+app.delete("/user", deleteUser);
 app.get("/user/:id", getUser);
 app.get("/user", getUser);
 app.post("/user", postUser);
-app.delete("/user/:id", deleteUser);
 app.get("/user/:id/pets/:animalid", getAnimals);
 app.use(notFound);
 function getConnection() {
@@ -225,6 +227,29 @@ function checkLogin(req, res, next) {
     else {
         res.sendStatus(401);
     }
+}
+function deleteCookie(req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var sessionid, output, database, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    sessionid = req.sessionID;
+                    output = [];
+                    return [4 /*yield*/, getConnection()];
+                case 1:
+                    database = _a.sent();
+                    return [4 /*yield*/, database.query("DELETE FROM sessions WHERE session_id= ?", [sessionid]).then(function (result) {
+                        }).catch(function (err) {
+                            console.log(err);
+                            res.sendStatus(500);
+                        })];
+                case 2:
+                    result = _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
 }
 function getUser(req, res) {
     return __awaiter(this, void 0, void 0, function () {
@@ -324,7 +349,8 @@ function deleteUser(req, res) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    user_id = req.params.id;
+                    user_id = req.session.userId;
+                    console.log("user_id:", user_id);
                     output = [];
                     return [4 /*yield*/, getConnection()];
                 case 1:

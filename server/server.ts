@@ -96,10 +96,10 @@ app.post('/login', async (req, res) => {
             req.session.userId = response[0].id;
             console.log("User Id:",req.session.userId);
             req.session.save();
-            res.status(200);
-            res.contentType("application/json");
-            res.json("");
-            //req.session.save(() => {res.redirect('http://localhost:5500/main.html')});
+            //res.status(200);
+            //res.contentType("application/json");
+            //res.json("");
+            req.session.save(() => {res.redirect('http://localhost:5500/main.html')});
         } else {
             const output = [];
             let errors: { [key: string]: string[] } = {};
@@ -125,14 +125,18 @@ app.post('/login', async (req, res) => {
         res.sendStatus(500);
     }
 });
+
 app.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
             return res.status(500).send('Failed to destroy session');
         }
+        deleteCookie(req,res)
         res.clearCookie("connect.sid");
         res.status(200).send('Session destroyed');
+        
     });
+    
 });
 
 app.use("/ressources", express.static("public"));
@@ -142,12 +146,12 @@ app.get("/user", checkLogin, getUser);
 app.delete("/user/pets/delete-pets", deleteAnimal);
 app.get("/user/pets", getAnimals);
 app.post("/user/pets", postAnimal);
-app.patch("/user/edit-user", patchUser);
+app.patch("/user", patchUser);
+app.delete("/user", deleteUser);
 app.get("/user/:id", getUser);
 app.get("/user", getUser);
 app.post("/user", postUser);
 
-app.delete("/user/:id", deleteUser);
 
 app.get("/user/:id/pets/:animalid", getAnimals);
 
@@ -187,6 +191,21 @@ function checkLogin(req: express.Request, res: express.Response, next:express.Ne
     }else{
         res.sendStatus(401);
     }
+}
+async function deleteCookie(req: express.Request, res: express.Response) {
+    const sessionid: string = req.sessionID
+    // Userlist'te kullanıcı var mı kontrol ediyoruz
+    const output = [];
+    const database = await getConnection();
+    const result = await database.query(
+        "DELETE FROM sessions WHERE session_id= ?",
+        [sessionid] 
+    ).then(result  => {
+       
+    }).catch(err => {
+        console.log(err);
+        res.sendStatus(500);
+    });
 }
 
 async function getUser(req: express.Request, res: express.Response) {
@@ -267,8 +286,8 @@ async function getUser(req: express.Request, res: express.Response) {
 }
 
 async function deleteUser(req: express.Request, res: express.Response) {
-    const user_id: string = req.params.id;
-    // Userlist'te kullanıcı var mı kontrol ediyoruz
+    const user_id: string = req.session.userId;
+    console.log("user_id:", user_id);
     const output = [];
     const database = await getConnection();
     const result = await database.query(
@@ -281,6 +300,8 @@ async function deleteUser(req: express.Request, res: express.Response) {
         res.sendStatus(500);
     });
 }
+
+
 
  async function checkFields(email:string,fName:string,lName:string,password:string,res: express.Response,database:any,output:any,errors:any){
    

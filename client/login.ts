@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     loginMail = document.querySelector("#loginForm [name='email']");
     loginPass = document.querySelector("#loginForm [name='password']");
 
-    loginForm.addEventListener("submit",  async function(event) {   // adding  eventlisteners to tableuser
+    /*loginForm.addEventListener("submit",  async function(event) {   // adding  eventlisteners to tableuser
         event.preventDefault();
         console.log("loginPass", loginPass);
         console.log("loginMail", loginMail);
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
             alert(errorText);
             console.log("Error: Response is not OK", response.statusText);
         }
-    });
+    });*/
 
     signUpButton.addEventListener("click",   (event: Event) =>  {
         event.preventDefault()

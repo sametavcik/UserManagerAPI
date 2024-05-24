@@ -54,49 +54,34 @@ document.addEventListener("DOMContentLoaded", function (e) {
     pass = document.querySelector("#registerForm [name='password']");
     loginMail = document.querySelector("#loginForm [name='email']");
     loginPass = document.querySelector("#loginForm [name='password']");
-    loginForm.addEventListener("submit", function (event) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response, output, errorText_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        event.preventDefault();
-                        console.log("loginPass", loginPass);
-                        console.log("loginMail", loginMail);
-                        return [4 /*yield*/, fetch("http://localhost:8080/login", {
-                                method: "POST",
-                                body: JSON.stringify({
-                                    email: loginMail.value,
-                                    password: loginPass.value
-                                }),
-                                headers: {
-                                    "Content-Type": "application/json"
-                                },
-                                credentials: "include"
-                            })];
-                    case 1:
-                        response = _a.sent();
-                        return [4 /*yield*/, response.json()];
-                    case 2:
-                        output = _a.sent();
-                        if (response === null || response === void 0 ? void 0 : response.ok) {
-                            console.log("response ok", response.status);
-                            window.location.href = "/main.html";
-                        }
-                        else {
-                            errorText_1 = "";
-                            Object.entries(output[0].errors).forEach(function (_a) {
-                                var key = _a[0], errors = _a[1];
-                                errorText_1 += "".concat(errors[0], "\n");
-                            });
-                            alert(errorText_1);
-                            console.log("Error: Response is not OK", response.statusText);
-                        }
-                        return [2 /*return*/];
-                }
-            });
+    /*loginForm.addEventListener("submit",  async function(event) {   // adding  eventlisteners to tableuser
+        event.preventDefault();
+        console.log("loginPass", loginPass);
+        console.log("loginMail", loginMail);
+        const response: Response = await fetch("http://localhost:8080/login", {
+            method: "POST",
+            body: JSON.stringify({
+                email: loginMail.value,
+                password: loginPass.value
+            }),
+            headers: {
+                "Content-Type": "application/json"
+            },
+        credentials: "include"
         });
-    });
+        let output = await response.json();
+        if (response?.ok) {
+            console.log("response ok", response.status);
+            window.location.href ="/main.html";
+        } else {
+            let errorText = ""
+            Object.entries(output[0].errors).forEach(([key, errors]) => {
+                errorText += `${errors[0]}\n`;
+            });
+            alert(errorText);
+            console.log("Error: Response is not OK", response.statusText);
+        }
+    });*/
     signUpButton.addEventListener("click", function (event) {
         event.preventDefault();
         loginForm.parentElement.style.display = "none";
@@ -110,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function (e) {
 });
 function addUser() {
     return __awaiter(this, void 0, void 0, function () {
-        var response, output, errorText_2;
+        var response, output, errorText_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, fetch("http://localhost:8080/user", {
@@ -142,12 +127,12 @@ function addUser() {
                         pass.value = "";
                     }
                     else {
-                        errorText_2 = "";
+                        errorText_1 = "";
                         Object.entries(output[0].errors).forEach(function (_a) {
                             var key = _a[0], errors = _a[1];
-                            errorText_2 += "".concat(key, " ").concat(errors[0], "\n");
+                            errorText_1 += "".concat(key, " ").concat(errors[0], "\n");
                         });
-                        alert(errorText_2);
+                        alert(errorText_1);
                         console.log("Error: Response is not OK", response.statusText);
                     }
                     return [2 /*return*/];

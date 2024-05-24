@@ -13,6 +13,7 @@ let tierName: HTMLInputElement;
 let tierKind: HTMLInputElement;
 let tableUser: HTMLElement;
 let logoutButton: HTMLElement;
+let deleteUserButton: HTMLElement;
 
 document.addEventListener("DOMContentLoaded", (e) => { 
     e.preventDefault();
@@ -26,6 +27,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
     tierName = document.querySelector("#formAnimal [name='tierName'] ")
     tierKind = document.querySelector("#formAnimal [name='tierKind'] ")
     logoutButton = document.querySelector("[data-mission='logout']")
+    deleteUserButton = document.querySelector("[data-mission='deleteUser']");
 
     formEdit.addEventListener("submit", function(event) { // when we click edit user button we find id of user with using its email then edit user
         event.preventDefault();
@@ -33,20 +35,22 @@ document.addEventListener("DOMContentLoaded", (e) => {
         stopEdit(); 
     });
 
-    logoutButton.addEventListener("click",  async function(event) {   // adding  eventlisteners to tableuser
-        if (confirm('Are you sure you want to logout?')) {
-                const response: Response = await fetch("http://localhost:8080/logout", {
-                method: "POST",
-                credentials: "include"
+    logoutButton.addEventListener("click",  logout);
+    deleteUserButton.addEventListener("click", async function(event){
+        if (confirm('Are you sure you want to delete our account?')) {
+            const response: Response = await fetch(`http://localhost:8080/user`, {
+            method: "DELETE",
+            credentials: "include"
             });
-            if (response?.ok) {
-                window.location.href ="/login.html";
+            if (response?.status == 204) {
+                logout(true); 
+                alert("you deleted yourself succesfully!")
             } else {
-                tableUser.innerHTML = ""
-                console.log("Error: Response is not OK", response.statusText);
+                console.log("Error: Unable to delete user", response.statusText);
             }
         }
-    });
+    }); 
+
 
     tableUser.addEventListener("click", (event: Event) => {   // adding  eventlisteners to tableuser
         
@@ -81,7 +85,8 @@ document.addEventListener("DOMContentLoaded", (e) => {
         await stopAnimalAdd();
     });
 
-    
+    document.querySelector("#editClose").addEventListener("click", (event: Event) =>   formEdit.style.display = "none");  // closing user edit form
+    document.querySelector("#editCloseAnimal").addEventListener("click", stopAnimalAdd);  // closing animal adding section
 
 });
 
@@ -109,6 +114,7 @@ async function renderUserList() {   // show all users on screen
         });
     } else {
         tableUser.innerHTML = ""
+        window.location.href="http://localhost:8080/user"
         console.log("Error: Response is not OK", response.statusText);
     }
 }
@@ -203,7 +209,7 @@ function stopEdit() {   // close user edit section
 }
 async function editUser(event: Event) {  // submit user edit button
     event.preventDefault();
-    const response: Response = await fetch(`http://localhost:8080/user/edit-user`, {
+    const response: Response = await fetch(`http://localhost:8080/user`, {
             method: "PATCH",
             body: JSON.stringify({
                 firstName: inputEditFName.value,
@@ -243,4 +249,19 @@ async function deleteAnimal(petID) {
     } else {
         console.log("Error: Unable to delete user", response.statusText);
     }
+}
+
+async function logout(bypassConfirm) {
+    if (bypassConfirm || confirm('Are you sure you want to logout?')) {
+        const response: Response = await fetch("http://localhost:8080/logout", {
+        method: "POST",
+        credentials: "include"
+    });
+    if (response?.ok) {
+        window.location.href ="/login.html";
+    } else {
+        tableUser.innerHTML = ""
+        console.log("Error: Response is not OK", response.statusText);
+    }
+}
 }

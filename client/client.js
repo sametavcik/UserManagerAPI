@@ -48,6 +48,7 @@ var tierName;
 var tierKind;
 var tableUser;
 var logoutButton;
+var deleteUserButton;
 document.addEventListener("DOMContentLoaded", function (e) {
     e.preventDefault();
     tableUser = document.querySelector("#tableUser");
@@ -61,30 +62,32 @@ document.addEventListener("DOMContentLoaded", function (e) {
     tierName = document.querySelector("#formAnimal [name='tierName'] ");
     tierKind = document.querySelector("#formAnimal [name='tierKind'] ");
     logoutButton = document.querySelector("[data-mission='logout']");
+    deleteUserButton = document.querySelector("[data-mission='deleteUser']");
     formEdit.addEventListener("submit", function (event) {
         event.preventDefault();
         editUser(event);
         stopEdit();
     });
-    logoutButton.addEventListener("click", function (event) {
+    logoutButton.addEventListener("click", logout);
+    deleteUserButton.addEventListener("click", function (event) {
         return __awaiter(this, void 0, void 0, function () {
             var response;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!confirm('Are you sure you want to logout?')) return [3 /*break*/, 2];
-                        return [4 /*yield*/, fetch("http://localhost:8080/logout", {
-                                method: "POST",
+                        if (!confirm('Are you sure you want to delete our account?')) return [3 /*break*/, 2];
+                        return [4 /*yield*/, fetch("http://localhost:8080/user", {
+                                method: "DELETE",
                                 credentials: "include"
                             })];
                     case 1:
                         response = _a.sent();
-                        if (response === null || response === void 0 ? void 0 : response.ok) {
-                            window.location.href = "/login.html";
+                        if ((response === null || response === void 0 ? void 0 : response.status) == 204) {
+                            logout(true);
+                            alert("you deleted yourself succesfully!");
                         }
                         else {
-                            tableUser.innerHTML = "";
-                            console.log("Error: Response is not OK", response.statusText);
+                            console.log("Error: Unable to delete user", response.statusText);
                         }
                         _a.label = 2;
                     case 2: return [2 /*return*/];
@@ -133,6 +136,8 @@ document.addEventListener("DOMContentLoaded", function (e) {
             });
         });
     });
+    document.querySelector("#editClose").addEventListener("click", function (event) { return formEdit.style.display = "none"; }); // closing user edit form
+    document.querySelector("#editCloseAnimal").addEventListener("click", stopAnimalAdd); // closing animal adding section
 });
 function renderUserList() {
     return __awaiter(this, void 0, void 0, function () {
@@ -157,6 +162,7 @@ function renderUserList() {
                     return [3 /*break*/, 4];
                 case 3:
                     tableUser.innerHTML = "";
+                    window.location.href = "http://localhost:8080/user";
                     console.log("Error: Response is not OK", response.statusText);
                     _a.label = 4;
                 case 4: return [2 /*return*/];
@@ -287,7 +293,7 @@ function editUser(event) {
             switch (_a.label) {
                 case 0:
                     event.preventDefault();
-                    return [4 /*yield*/, fetch("http://localhost:8080/user/edit-user", {
+                    return [4 /*yield*/, fetch("http://localhost:8080/user", {
                             method: "PATCH",
                             body: JSON.stringify({
                                 firstName: inputEditFName.value,
@@ -339,6 +345,32 @@ function deleteAnimal(petID) {
                         console.log("Error: Unable to delete user", response.statusText);
                     }
                     return [2 /*return*/];
+            }
+        });
+    });
+}
+function logout(bypassConfirm) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!(bypassConfirm || confirm('Are you sure you want to logout?'))) return [3 /*break*/, 2];
+                    return [4 /*yield*/, fetch("http://localhost:8080/logout", {
+                            method: "POST",
+                            credentials: "include"
+                        })];
+                case 1:
+                    response = _a.sent();
+                    if (response === null || response === void 0 ? void 0 : response.ok) {
+                        window.location.href = "/login.html";
+                    }
+                    else {
+                        tableUser.innerHTML = "";
+                        console.log("Error: Response is not OK", response.statusText);
+                    }
+                    _a.label = 2;
+                case 2: return [2 /*return*/];
             }
         });
     });

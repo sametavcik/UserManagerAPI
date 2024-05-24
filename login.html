@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -5,40 +6,39 @@
     <title>Login Page</title>
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="node_modules/@fortawesome/fontawesome-free/css/all.css">
     <link rel="stylesheet" href="/public/css/style.css">
     <script type="text/javascript" src="client/login.js" defer></script>
 </head>
 <body>
-<section class="vh-100">
-    <div class="container py-5 h-100">
+    
+    <section class="vh-100">
+        <div class="container-fluid h-custom">
+          <div class="row d-flex justify-content-center align-items-center h-100">
+        
+            <div class="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
+                <form id="loginForm" action="http://localhost:8080/login"  method="POST">
 
-        <div class="row d-flex align-items-center justify-content-center h-100">
-            <div class="col-md-8 col-lg-7 col-xl-6">
-                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.svg"
-                     class="img-fluid" alt="Phone image">
-            </div>
-            <div class="col-md-7 col-lg-5 col-xl-5 offset-xl-1">
-                <form id="loginForm">
-                    <!-- Email input -->
-                    <div data-mdb-input-init class="form-outline mb-4">
-                        <input type="email" name="email" id="email" class="form-control form-control-lg" required>
-                        <label class="form-label" for="email">Email address</label>
-                    </div>
-
-                    <!-- Password input -->
-                    <div data-mdb-input-init class="form-outline mb-4">
-                        <input type="password" name="password" id="password" class="form-control form-control-lg" required/>
-
-                        <label class="form-label" for="password">Password</label>
-                    </div>
-
-                    <!-- Sign In button -->
-                    <button data-mission='login' type="submit" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary btn-lg btn-block">Sign In</button>  
-                     <!-- Sign Up button -->
-                    <button data-mission="sign-up" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary btn-lg btn-block">Sign Up</button>    
-             
-                </form>
+                <!-- Email input -->
+                <div data-mdb-input-init class="form-outline mb-4">
+                  <input type="email" id="email" name="email" class="form-control" placeholder="Enter a valid email address" required/>
+                  <label class="form-label" for="email">Email address</label>
                 </div>
+      
+                <!-- Password input -->
+                <div data-mdb-input-init class="form-outline mb-3">
+                  <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required/>
+                  <label class="form-label" for="password">Password</label>
+                </div>
+      
+                <div class="text-center text-lg-start mt-4 pt-2">
+                  <button data-mission="login" type="submit" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary btn-lg"
+                    style="padding-left: 2.5rem; padding-right: 2.5rem;">Login</button>
+                  <p class="small fw-bold mt-2 pt-1 mb-0">Don't have an account? <button  data-mission='sign-up' class="btn link-danger">Register</button></p>
+                </div>
+      
+              </form>
+            </div>
             <div class="col-md-7 col-lg-5 col-xl-5 offset-xl-1 d-none">
                 <form id="registerForm" action="http://localhost:8080/user" method="POST">
                     <!-- FirstName input -->
@@ -64,13 +64,27 @@
                         <label class="form-label" for="password">Password</label>
                     </div>
 
-                     <button data-mission="sign-up" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary btn-lg btn-block">Sign Up</button>    
-                </form>
+                     <div class="text-center text-lg-start mt-4 pt-2">
+                        <button data-mission="sign-up" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary btn-lg btn-block">Sign Up</button>
+                        <a href="/login.html" class="text-decoration-none "><p class="small fw-bold mt-2 pt-1 mb-0"><i class="fas fa-backward"></i>Go back login</p></a>
+                      </div>
+            
+                    </form>
             </div>
-
+            <div class="col-md-9 col-lg-6 col-xl-5">
+                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp"
+                  class="img-fluid" alt="Sample image">
+              </div>
+          </div>
         </div>
-        
-    </div>
-</section>
+        <div
+          class="d-flex flex-column flex-md-row text-center text-md-start justify-content-between py-4 px-4 px-xl-5 bg-primary" style="bottom: 0;position: absolute;width: 100%;">
+          <!-- Copyright -->
+          <div class="text-white mb-3 mb-md-0" style="width: 100%; font-style: italic;font-size: 13px; text-align: center;">
+            Copyright © 2024, Gizem Duygu Sönmez, All rights reserved.
+          </div>
+          <!-- Copyright -->
+        </div>
+      </section>
 </body>
 </html>
