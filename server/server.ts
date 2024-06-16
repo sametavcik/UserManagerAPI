@@ -2,17 +2,50 @@ import * as express from 'express';
 import * as Path from "path";
 import * as mysql from 'mysql2/promise';
 
-
 const cors = require('cors');
 const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);  // MySQL için session store
+const MySQLStore = require('express-mysql-session')(session);  // MySQL Store
 
-
+// session managing
 declare module 'express-session' {
     interface Session {
     userId: string; 
     }
   }
+// opens connection
+  async function getConnection(): Promise<any> {
+    try {
+        // Veritabanı bağlantısını oluşturma
+        const connection = await mysql.createConnection({
+            user: 'gizem.duygu.soenmez@mnd.thm.de',
+            password: 'KGVGO[R1CylZOP@F',
+            database: 'gdsn02',
+            host: 'ip1-dbs.mni.thm.de',
+            port: 3306
+        });
+        return connection;
+    } catch (error) {
+        console.error("connection ERR:", error);
+    }
+}
+
+function closeConnection(connection:any):any{
+    if (connection) {
+        connection.close((err) => {
+            if (err) {
+                console.error('Bağlantı kapatma hatası:', err.message);
+            } else {
+                console.log('Bağlantı başarıyla kapatıldı.');
+            }
+        });
+    }
+}
+// db 
+let database: any | null = null;
+
+(async () => {
+    database = await getConnection();
+})();
 
 // MySQL session store options
 const sessionStoreOptions = {
@@ -22,40 +55,13 @@ const sessionStoreOptions = {
     password: 'KGVGO[R1CylZOP@F',
     database: 'gdsn02'
 };
+
 const pool = mysql.createPool(sessionStoreOptions)
 const sessionStore = new MySQLStore(sessionStoreOptions,pool);
-
-
-
-class User {   // User Class
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    password: string;
-    constructor(id: string, fName: string, lName: string, email: string,password:string ){
-        this.id = id;
-        this.firstName = fName;
-        this.lastName = lName;
-        this.email = email;
-        this.password = password;
-    }
-}
-
-class Animal { // Animal Class
-    id: string;
-    name: string;
-    kind: string;
-
-
-    constructor(name: string, kind: string) {
-        this.name = name;
-        this.kind = kind;
-    }
-}
 const allowedOrigins = ['http://localhost:5500', 'http://127.0.0.1:5500'];
-
 const app: express.Express = express();
+
+// Cors settings
 app.use(cors({
     origin: allowedOrigins, 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -63,7 +69,6 @@ app.use(cors({
     credentials: true
 }));
 app.listen(8080);
-
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(session({
@@ -86,7 +91,6 @@ app.post('/login', async (req, res) => {
     console.log("login----->",req.session.userId);
     const { email, password } = req.body;
     try {
-        const database = await getConnection();
         const [response] = await database.query(
             "SELECT * FROM User WHERE email=? AND password=?", 
             [email, password]
@@ -124,6 +128,7 @@ app.post('/login', async (req, res) => {
         console.error(err);
         res.sendStatus(500);
     }
+    
 });
 
 app.post('/logout', (req, res) => {
@@ -134,14 +139,13 @@ app.post('/logout', (req, res) => {
         deleteCookie(req,res)
         res.clearCookie("connect.sid");
         res.status(200).send('Session destroyed');
-        
+        closeConnection(database)
     });
-    
 });
 
+// branches
 app.use("/ressources", express.static("public"));
 app.use("/ressources/bootstrap", express.static("public/node_modules/bootstrap/dist/css"));
-
 app.get("/user", checkLogin, getUser);
 app.delete("/user/pets/delete-pets", deleteAnimal);
 app.get("/user/pets", getAnimals);
@@ -151,39 +155,10 @@ app.delete("/user", deleteUser);
 app.get("/user/:id", getUser);
 app.get("/user", getUser);
 app.post("/user", postUser);
-
-
 app.get("/user/:id/pets/:animalid", getAnimals);
-
 app.use(notFound);
 
-async function getConnection(): Promise<any> {
-    try {
-        // Veritabanı bağlantısını oluşturma
-        const connection = await mysql.createConnection({
-            user: 'gizem.duygu.soenmez@mnd.thm.de',
-            password: 'KGVGO[R1CylZOP@F',
-            database: 'gdsn02',
-            host: 'ip1-dbs.mni.thm.de',
-            port: 3306
-        });
-        return connection;
-    } catch (error) {
-        console.error("connection ERR:", error);
-    }
-}
-function closeConnection(connection:any):any{
-    if (connection) {
-        connection.close((err) => {
-            if (err) {
-                console.error('Bağlantı kapatma hatası:', err.message);
-            } else {
-                console.log('Bağlantı başarıyla kapatıldı.');
-            }
-        });
-    }
-}
-
+// check sessions
 function checkLogin(req: express.Request, res: express.Response, next:express.NextFunction):void{
     console.log("check login...");
     if(req.session.userId !== undefined){
@@ -196,7 +171,6 @@ async function deleteCookie(req: express.Request, res: express.Response) {
     const sessionid: string = req.sessionID
     // Userlist'te kullanıcı var mı kontrol ediyoruz
     const output = [];
-    const database = await getConnection();
     const result = await database.query(
         "DELETE FROM sessions WHERE session_id= ?",
         [sessionid] 
@@ -216,7 +190,6 @@ async function getUser(req: express.Request, res: express.Response) {
     const output = [];
 
     let userFound = false;
-    const database = await getConnection();
     if (id !== undefined) {
         const result =  await database.query("SELECT id, firstname, lastname, email FROM User WHERE id = ?", [id]).then(result => {
             // Das RowDataPacket enthält bei SELECT-Abfragen die gewünschten Werte
@@ -281,7 +254,7 @@ async function getUser(req: express.Request, res: express.Response) {
     } else {
         notFound(req, res);
     }
-    //closeConnection(database);
+    
 
 }
 
@@ -289,7 +262,6 @@ async function deleteUser(req: express.Request, res: express.Response) {
     const user_id: string = req.session.userId;
     console.log("user_id:", user_id);
     const output = [];
-    const database = await getConnection();
     const result = await database.query(
         "DELETE FROM User WHERE id= ?",
         [user_id] 
@@ -300,8 +272,6 @@ async function deleteUser(req: express.Request, res: express.Response) {
         res.sendStatus(500);
     });
 }
-
-
 
  async function checkFields(email:string,fName:string,lName:string,password:string,res: express.Response,database:any,output:any,errors:any){
    
@@ -386,8 +356,6 @@ async function postUser(req: express.Request, res: express.Response) {
 
     const output = [];
     let errors: { [key: string]: string[] } = {};
-
-    const database = await getConnection();
     await checkFields(email,fName,lName,password,res,database,output,errors)
     if (output.length == 0) {
         const result = await database.query(
@@ -471,8 +439,6 @@ async function patchUser(req: express.Request, res: express.Response) {
 
     let output = [];
     let errors: { [key: string]: string[] } = {};
-    const database = await getConnection();
-
     if(id !== undefined){
         await checkValues(email,fName,lName,password,errors,res,output,database)
         if(output.length == 0){
@@ -532,9 +498,7 @@ async function patchUser(req: express.Request, res: express.Response) {
 
 async function getAnimals(req: express.Request, res: express.Response) {
     const owner_id: string = req.session.userId;
-    const output = [];
-    const database = await getConnection();
-       
+    const output = [];       
     const result = await database.query("SELECT id, name, kind, owner_id FROM Animal WHERE owner_id = ?", [owner_id]).then(result => {
         const rows: mysql.RowDataPacket[] = result[0];
         console.log("rows:",rows);
@@ -623,7 +587,6 @@ async function postAnimal(req: express.Request, res: express.Response){
     const kind: string = req.body.kind;
     let output = [];
     let errors: { [key: string]: string[] } = {};
-    const database = await getConnection();
     await checkAnimalFields(errors, name, output, kind, owner_id, res, database);
 
     if (output.length == 0) {
@@ -655,8 +618,6 @@ async function deleteAnimal(req: express.Request, res: express.Response){
     const animal_id: string = req.body.petID;
     console.log("animal_id:", animal_id);
     const output = [];
-    const database = await getConnection();
-
     const result = await database.query(
         "DELETE FROM Animal WHERE id= ? ",
         [animal_id] 
