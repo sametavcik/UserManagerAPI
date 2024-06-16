@@ -55,11 +55,11 @@ let database: any | null = null;
 
 // MySQL session store options
 const sessionStoreOptions = {
-    host: 'ip1-dbs.mni.thm.de',
+    host: dbHost,
     port: 3306,
-    user: 'gizem.duygu.soenmez@mnd.thm.de',
-    password: 'KGVGO[R1CylZOP@F',
-    database: 'gdsn02'
+    user: dbUser,
+    password: dbPassword,
+    database: dbDatabase
 };
 
 const pool = mysql.createPool(sessionStoreOptions)
