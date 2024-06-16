@@ -156,7 +156,7 @@ function renderUserList() {
                     tableUser.innerHTML = "";
                     users.forEach(function (user) {
                         var tr = document.createElement("tr");
-                        tr.innerHTML = "\n            <td>".concat(user.email, "</td>\n            <td>").concat(user.lastName, "</td>\n            <td>").concat(user.firstName, "</td>\n            <td>\n              <button class=\"btn btn-primary edit\" data-email=\"").concat(user.email, "\"><i class=\"fas fa-pen\"></i></button>\n              <button class=\"btn btn-primary showAnimal\" data-email=\"").concat(user.email, "\"><i class=\"fas fa-paw\"></i></button>\n              <button class=\"btn btn-primary addAnimal\" data-email=\"").concat(user.email, "\"><i class=\"fa-solid fa-plus\"></i></button>\n            </td>");
+                        tr.innerHTML = "\n            <td>".concat(user.email, "</td>\n            <td>").concat(user.lastName, "</td>\n            <td>").concat(user.firstName, "</td>\n            <td>\n              <button class=\"btn btn-outline-warning edit\" data-email=\"").concat(user.email, "\"><i class=\"fas fa-pen\"></i></button>\n              <button class=\"btn btn-outline-success showAnimal\" data-email=\"").concat(user.email, "\"><i class=\"fas fa-paw\"></i></button>\n              <button class=\"btn btn-outline-info addAnimal\" data-email=\"").concat(user.email, "\"><i class=\"fa-solid fa-plus\"></i></button>\n            </td>");
                         tableUser.appendChild(tr);
                     });
                     return [3 /*break*/, 4];
@@ -188,7 +188,7 @@ function showAnimal() {
                         tableAnimal.innerHTML = "";
                         output.forEach(function (animal) {
                             var tr = document.createElement("tr");
-                            tr.innerHTML = "\n            <td>".concat(animal.name, "</td>\n            <td>").concat(animal.kind, "</td>\n            <td><button class=\"btn btn-primary deleteAnimal\" data-animal-id=\"").concat(animal.id, "\" data-target=\"deleteAnimal\"><i class=\"fas fa-trash\"></i></button></td>\n            <td></td>\n            ");
+                            tr.innerHTML = "\n            <td>".concat(animal.name, "</td>\n            <td>").concat(animal.kind, "</td>\n            <td><button class=\"btn btn-outline-danger deleteAnimal\" data-animal-id=\"").concat(animal.id, "\" data-target=\"deleteAnimal\"><i class=\"fas fa-trash\"></i></button></td>\n            <td></td>\n            ");
                             tableAnimal.appendChild(tr);
                         });
                     }

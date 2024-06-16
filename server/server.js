@@ -246,9 +246,9 @@ function deleteCookie(req, res) {
     });
 }
 function getUser(req, res) {
-    var _a;
     return __awaiter(this, void 0, void 0, function () {
         var id, search, output, userFound, result, result, result;
+        var _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:

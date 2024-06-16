@@ -106,9 +106,9 @@ async function renderUserList() {   // show all users on screen
             <td>${user.lastName}</td>
             <td>${user.firstName}</td>
             <td>
-              <button class="btn btn-primary edit" data-email="${user.email}"><i class="fas fa-pen"></i></button>
-              <button class="btn btn-primary showAnimal" data-email="${user.email}"><i class="fas fa-paw"></i></button>
-              <button class="btn btn-primary addAnimal" data-email="${user.email}"><i class="fa-solid fa-plus"></i></button>
+              <button class="btn btn-outline-warning edit" data-email="${user.email}"><i class="fas fa-pen"></i></button>
+              <button class="btn btn-outline-success showAnimal" data-email="${user.email}"><i class="fas fa-paw"></i></button>
+              <button class="btn btn-outline-info addAnimal" data-email="${user.email}"><i class="fa-solid fa-plus"></i></button>
             </td>`;
             tableUser.appendChild(tr);
         });
@@ -134,7 +134,7 @@ async function showAnimal() {  // Get animals of User
             tr.innerHTML = `
             <td>${animal.name}</td>
             <td>${animal.kind}</td>
-            <td><button class="btn btn-primary deleteAnimal" data-animal-id="${animal.id}" data-target="deleteAnimal"><i class="fas fa-trash"></i></button></td>
+            <td><button class="btn btn-outline-danger deleteAnimal" data-animal-id="${animal.id}" data-target="deleteAnimal"><i class="fas fa-trash"></i></button></td>
             <td></td>
             `;
             tableAnimal.appendChild(tr);
