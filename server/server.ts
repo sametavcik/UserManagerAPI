@@ -5,6 +5,12 @@ import * as mysql from 'mysql2/promise';
 const cors = require('cors');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);  // MySQL Store
+require('dotenv').config();
+
+const dbPassword = process.env.DB_PASSWORD;
+const dbUser = process.env.DB_USER;
+const dbDatabase = process.env.DB_DATABASE;
+const dbHost = process.env.HOST;
 
 // session managing
 declare module 'express-session' {
@@ -17,10 +23,10 @@ declare module 'express-session' {
     try {
         // Veritabanı bağlantısını oluşturma
         const connection = await mysql.createConnection({
-            user: 'gizem.duygu.soenmez@mnd.thm.de',
-            password: 'KGVGO[R1CylZOP@F',
-            database: 'gdsn02',
-            host: 'ip1-dbs.mni.thm.de',
+            user: dbUser,
+            password: dbPassword,
+            database: dbDatabase,
+            host: dbHost,
             port: 3306
         });
         return connection;

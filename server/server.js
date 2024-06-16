@@ -51,6 +51,11 @@ var mysql = require("mysql2/promise");
 var cors = require('cors');
 var session = require('express-session');
 var MySQLStore = require('express-mysql-session')(session); // MySQL Store
+require('dotenv').config();
+var dbPassword = process.env.DB_PASSWORD;
+var dbUser = process.env.DB_USER;
+var dbDatabase = process.env.DB_DATABASE;
+var dbHost = process.env.HOST;
 // opens connection
 function getConnection() {
     return __awaiter(this, void 0, void 0, function () {
@@ -60,10 +65,10 @@ function getConnection() {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
                     return [4 /*yield*/, mysql.createConnection({
-                            user: 'gizem.duygu.soenmez@mnd.thm.de',
-                            password: 'KGVGO[R1CylZOP@F',
-                            database: 'gdsn02',
-                            host: 'ip1-dbs.mni.thm.de',
+                            user: dbUser,
+                            password: dbPassword,
+                            database: dbDatabase,
+                            host: dbHost,
                             port: 3306
                         })];
                 case 1:
